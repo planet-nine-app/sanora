@@ -1,0 +1,22 @@
+{
+  "name": "sanora-club",
+  "version": "0.0.1",
+  "description": "The server for sanora.club",
+  "keywords": [
+    "products",
+    "selling"
+  ],
+  "license": "GPL-3.0-or-later",
+  "author": "planetnineisaspaceship",
+  "type": "module",
+  "main": "sanora-club.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "addie-js": "^0.0.6",
+    "express": "^4.21.2",
+    "magic-gateway-js": "^0.0.2",
+    "sessionless-node": "^0.11.0"
+  }
+}
