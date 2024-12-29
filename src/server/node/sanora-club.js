@@ -1,6 +1,7 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import db from './src/persistence/db.js';
+import generic from './src/product-pages/generic.js';
 import gateway from 'magic-gateway-js';
 import addie from 'addie-js';
 import sessionless from 'sessionless-node';
@@ -247,6 +248,29 @@ console.warn(err);
     res.status(404);
     res.send({error: 'not found'});
   }
+});
+
+app.get('/products/:uuid/:title', async (req, res) => {
+  try {
+    const product = await db.getProduct(req.params.uuid, req.params.title);
+    res.send(product);    
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
+app.get('/products/:uuid/:title/:type', async (req, res) => {
+   try {
+    const product = await db.getProduct(req.params.uuid, req.params.title);
+    const html = await generic.htmlForProduct(product);
+    res.send(html);    
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  } 
 });
 
 app.listen(process.env.PORT || 7243);

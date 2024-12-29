@@ -123,3 +123,14 @@ it('should put an image for the product', async () => {
 
 });
 
+it('should get product', async () => {
+  const res = await get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}`);
+  res.body.title.should.equal('My product');
+});
+
+it('should get product html', async () => {
+  const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic`);
+console.log(res.text);
+  res.text.indexOf('My product').should.not.equal(-1);
+});
+

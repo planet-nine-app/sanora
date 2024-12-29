@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, minimum-scale=1.00">
+
+  <!--these are the tags that create the web preview card. You can use og:, or twitter: tags or both-->
+  <meta name="twitter:title" content="{{title}}">
+  <meta name="description" content="{{description}}">
+  <meta name="twitter:description" content="{{description}}">
+  <meta name="twitter:image" content="{{image}}">
+
+  <meta name="og:title" content="{{title}}">
+  <meta name="og:description" content="{{description}}">
+  <meta name="og:image" content="{{image}}">
+
+  <title>{{title}}</title>
+</head>
+<body>
+<teleport pubKey="{{pubKey}}" signature="{{signature}}" message="{{title}}{{description}}{{amount}}" spell="sanora-club" amount="{{amount}}">
+<div style="width:100%;overflow:hidden;">
+  <img style="width:100%;height:auto;" src="{{image}}"></img>
+  <br>
+  <h2>{{title}}</h2>
+  <br>
+  <br>
+  <h4>{{description}}</h4>
+</div>
+</teleport>
+
+</body>
+</html>
