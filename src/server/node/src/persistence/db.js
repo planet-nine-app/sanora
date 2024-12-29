@@ -54,6 +54,25 @@ console.log('throwing');
   getKeys: async () => {
     const keyString = await client.get('keys');
     return JSON.parse(keyString);
+  },
+
+  putProduct: async (user, product) => {
+    const uuid = user.uuid;
+    product.uuid = uuid;
+    await client.set(`product:${title}`, JSON.stringify(product));
+    
+    const titles = (await client.get(`products:${uuid}`)) || {};
+    titles[product.title] = product;
+    await client.set(`products:${uuid}`, JSON.stringify(titles));
+    return product;
+  },
+
+  getProduct: async (title) => {
+    const product = await client.get(`product:${title}`);
+    if(!product) {
+      throw new Error('not found');
+    }
+    return JSON.parse(product);
   }
 
 };
