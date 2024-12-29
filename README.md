@@ -130,7 +130,47 @@ And then you can start putting products.
 </details>
 
 <details>
- <summary><code>PUT</code> <code><b>/user/:uuid/product/:title/image</b></code> <code>Puts an image for the product with the given title</code></summary>
+ <summary><code>PUT</code> <code><b>/user/:uuid/product/:title/artifact</b></code> <code>Puts an image for the product with the given title</code></summary>
+
+##### Headers
+
+> | name         |  required     | data type               | description                                                           |
+> |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | x-pn-artifact-type        |  true     | jpg | png               | artifact type   |
+> | x-pn-timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
+> | x-pn-signature    |  true     | string (signature)      | the signature from sessionless for the message  |
+
+##### Parameters
+
+> | name         |  required     | data type               | description                                                           |
+> |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | artifact     |  true     | artifact type           | the artifact to upload   |
+> | timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
+> | signature    |  true     | string (signature)      | the signature from sessionless for the message  |
+
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json`                | `USER`   |
+> | `400`         | `application/json`                | `{"code":"400","message":"Bad Request"}`                            |
+
+##### Example cURL
+
+TODO
+
+</details>
+
+<details>
+ <summary><code>PUT</code> <code><b>/user/:uuid/product/:title/artifact/</b></code> <code>Puts an image for the product with the given title</code></summary>
+
+##### Headers
+
+> | name         |  required     | data type               | description                                                           |
+> |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | x-pn-timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
+> | x-pn-signature    |  true     | string (signature)      | the signature from sessionless for the message  |
 
 ##### Parameters
 
