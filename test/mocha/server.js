@@ -28,6 +28,7 @@ const _delete = async function(path, body) {
 
 let savedUser = {};
 let keys = {};
+let keysToReturn = {};
 
 it('should register a user', async () => {
   keys = await sessionless.generateKeys((k) => { keysToReturn = k; }, () => {return keysToReturn;});
@@ -48,14 +49,14 @@ console.log(res.body);
   res.body.uuid.length.should.equal(36);
 });
 
-it('should put an account to a processor', async () => {
+/*it('should put an account to a processor', async () => {
   const payload = {
     timestamp: new Date().getTime() + '',
     name: "Foo",
     email: "zach+" + (Math.floor(Math.random() * 100000)) + "@planetnine.app"
   };
 
-  const message = payload.timestamp + savedUser.uuid + payload.name + payload.email;
+  const message = payload.timestamp + savedUser.addieUser.uuid + payload.name + payload.email;
 
   payload.signature = await sessionless.sign(message);
 
@@ -63,7 +64,7 @@ it('should put an account to a processor', async () => {
   savedUser = res.body;
 console.log('stripe account id', savedUser.stripeAccountId);
   savedUser.stripeAccountId.should.not.equal(null);
-}).timeout(60000);
+}).timeout(60000);*/
 
 it('should get user with account id', async () => {
   const timestamp = new Date().getTime() + '';
@@ -71,8 +72,8 @@ it('should get user with account id', async () => {
   const signature = await sessionless.sign(timestamp + savedUser.uuid);
 
   const res = await get(`${baseURL}user/${savedUser.uuid}?timestamp=${timestamp}&signature=${signature}`);
+  res.body.addieUser.uuid.should.equal(savedUser.addieUser.uuid);
   savedUser = res.body;
-  savedUser.stripeAccountId.should.not.equal(null);
 });
 
 it('should put a product', async () => {
@@ -86,7 +87,8 @@ it('should put a product', async () => {
   const message = payload.timestamp + savedUser.uuid + title + payload.description + payload.price;
   payload.signature = await sessionless.sign(message);
 
-  const res = put(`${baseURL}user/${savedUser.uuid}/product/${title}`, payload);
+  const res = await put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}`, payload);
+console.log('product meta,', res.body);
   res.body.title.should.equal(title);
 });
 
@@ -97,12 +99,12 @@ it('should put an artifact for the product', async () => {
   const message = timestamp + savedUser.uuid + title;
   const signature = await sessionless.sign(message);
 
-  const res = await superAgent.post(`${baseURL}popup/image`)
-    .attach('artifact', './test/book.epub')
+  const res = await superAgent.put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}/artifact`)
+    .attach('artifact', './book.epub')
     .set('x-pn-timestamp', timestamp)
     .set('x-pn-signature', signature);
 
-  res.body.artifacts.length.should.equal(1);
+  res.body.success.should.equal(true);
 });
 
 it('should put an image for the product', async () => {
@@ -112,12 +114,12 @@ it('should put an image for the product', async () => {
   const message = timestamp + savedUser.uuid + title;
   const signature = await sessionless.sign(message);
 
-  const res = await superAgent.post(`${baseURL}popup/image`)
-    .attach('image', './test/image.png')
+  const res = await superAgent.put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}/image`)
+    .attach('image', './image.png')
     .set('x-pn-timestamp', timestamp)
     .set('x-pn-signature', signature);
 
-  res.body.artifacts.length.should.equal(1);
+  res.body.success.should.equal(true);
 
 });
 

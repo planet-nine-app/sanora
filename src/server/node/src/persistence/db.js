@@ -7,7 +7,7 @@ const client = await createClient()
   .connect();
     
 const db = {
-  getUser: async (uuid) => {
+  getUserByUUID: async (uuid) => {
     const user = await client.get(`user:${uuid}`);
     if(!user) {
 console.log('throwing');
@@ -32,7 +32,7 @@ console.log('throwing');
     user.uuid = uuid;
     await client.set(`user:${uuid}`, JSON.stringify(user));
     await client.set(`pubKey:${user.pubKey}`, uuid);
-    return uuid;
+    return user;
   },
 
   saveUser: async (user) => {
@@ -57,18 +57,20 @@ console.log('throwing');
   },
 
   putProduct: async (user, product) => {
+console.log('putting product', product);
     const uuid = user.uuid;
     product.uuid = uuid;
-    await client.set(`product:${title}`, JSON.stringify(product));
+    await client.set(`${user.uuid}:product:${product.title}`, JSON.stringify(product));
     
-    const titles = (await client.get(`products:${uuid}`)) || {};
+    const titlesJSON = (await client.get(`products:${uuid}`)) || '{}';
+    const titles = JSON.parse(titlesJSON);
     titles[product.title] = product;
     await client.set(`products:${uuid}`, JSON.stringify(titles));
     return product;
   },
 
-  getProduct: async (title) => {
-    const product = await client.get(`product:${title}`);
+  getProduct: async (uuid, title) => {
+    const product = await client.get(`${uuid}:product:${title}`);
     if(!product) {
       throw new Error('not found');
     }
