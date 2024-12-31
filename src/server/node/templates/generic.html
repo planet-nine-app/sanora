@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 <head>
+  <script src="https://js.stripe.com/v3/"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, minimum-scale=1.00">
 
@@ -27,6 +28,100 @@
   <h4>{{description}}</h4>
 </div>
 </teleport>
+<br>
+<br>
+<form id="payment-form" class="payment-form" style="display: none;">
+    <div id="payment-element">
+    </div>
+    <button id="submit-button">Pay now</button>
+    <div id="error-message" class="error-message" style="display: none;"></div>
+    <div id="loading" class="loading">Processing payment...</div>
+</form>
 
+<script type="text/javascript">
+  let stripe;
+  let elements;
+  let response;
+
+  const form = document.getElementById('payment-form');
+  const submitButton = document.getElementById('submit-button');
+  const errorMessage = document.getElementById('error-message');
+  const loadingMessage = document.getElementById('loading');
+
+  function getPaymentIntentWithoutSplits(amount, currency) {
+    try {
+      const payload = {
+	timestamp: new Date().getTime() + '',
+	amount: {{amount}}, 
+	currency: 'USD',
+	payees: [] 
+      };
+
+      const message = payload.timestamp + savedUser.uuid + payload.amount + payload.currency;
+  
+      payload.signature = await sessionless.sign(message);
+  
+      const res = await post(`${baseURL}user/${savedUser.uuid}/processor/stripe/intent`, payload);
+
+      stripe = Stripe(response.publishableKey);
+      elements = stripe.elements({
+        clientSecret: response.paymentIntent
+      });
+
+      const paymentElement = elements.create('payment');
+      paymentElement.mount('#payment-element');
+    } catch(err) {
+  console.warn(err);
+    }    
+  };
+
+  window.confirmPayment = async () => {
+    const redirect = 'what should this be?';
+    try {
+      const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+              return_url: redirect,
+          },
+      });
+
+      if(error) {
+        showError(error.message);
+      }
+    } catch(err) {
+      showError('An unexpected error occurred.');
+console.warn('payment error: ', err);
+    }
+  };
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    // Disable form submission while processing
+    setLoading(true);
+
+    await window.confirmPayment();
+
+    setLoading(false);
+  });
+
+  const showError = (message) => {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+    setTimeout(() => {
+      errorMessage.style.display = 'none';
+      errorMessage.textContent = '';
+    }, 5000);
+  };
+
+  const setLoading = (isLoading) => {
+    submitButton.disabled = isLoading;
+    loadingMessage.style.display = isLoading ? 'block' : 'none';
+  };
+</script>
 </body>
 </html>

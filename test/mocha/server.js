@@ -131,6 +131,22 @@ it('should get product', async () => {
 it('should get product html', async () => {
   const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic`);
 console.log(res.text);
+console.log('headers:', res.headers);
+  savedUser['set-cookie'] = res.headers['set-cookie'];
   res.text.indexOf('My product').should.not.equal(-1);
+});
+
+it('should get payment intent', async () => {
+  const payload = {
+    timestamp: new Date().getTime() + '',
+    amount: 2000,
+    currency: 'USD'
+  };
+
+  const res = await superAgent.put(`${baseURL}processor/stripe/intent`)
+    .set('Cookie', savedUser['set-cookie'])
+    .set('Content-Type', 'application/json');
+  
+  console.log(res.body);
 });
 

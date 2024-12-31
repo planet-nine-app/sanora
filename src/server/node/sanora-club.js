@@ -1,5 +1,7 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
+import session from 'express-session';
+import store from 'memorystore';
 import db from './src/persistence/db.js';
 import generic from './src/product-pages/generic.js';
 import gateway from 'magic-gateway-js';
@@ -7,6 +9,8 @@ import addie from 'addie-js';
 import sessionless from 'sessionless-node';
 import fs from 'fs';
 import path from 'path';
+
+const MemoryStore = store(session);
 
 const allowedTimeDifference = process.env.ALLOWED_TIME_DIFFERENCE || 600000;
 
@@ -261,8 +265,42 @@ console.warn(err);
   }
 });
 
+app.use(session({ 
+  store: new MemoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  resave: false,
+  saveUninitialized: false,
+  secret: 'seize the means of production!!!', 
+  cookie: { maxAge: 60000000 }
+}));
+
 app.get('/products/:uuid/:title/:type', async (req, res) => {
    try {
+    if(!req.session.uuid) {
+      req.session.regenerate((err) => {
+console.warn(err);
+console.log('session', req.session);
+      });
+
+      let keys;
+      const newAddieUUID = await addie.createUser(newKeys => keys = newKeys, () => keys);
+
+      const newAddieUser = {
+        uuid: newAddieUUID,
+        keys
+      };
+console.log(newAddieUser);
+
+      const user = {
+	 ...newAddieUser,
+	 pubKey: keys.pubKey     
+      };
+      req.session.uuid = user.uuid;
+
+      await db.saveUser(user);
+    }
+
     const product = await db.getProduct(req.params.uuid, req.params.title);
     const html = await generic.htmlForProduct(product);
     res.send(html);    
@@ -271,6 +309,51 @@ console.warn(err);
     res.status(404);
     res.send({error: 'not found'});
   } 
+});
+
+app.put('/processor/stripe/intent', async (req, res) => {
+  try {
+    const body = req.body;
+    const timestamp = body.timestamp;
+    const amount = body.amount;
+    const currency = body.currency;
+
+    if(!req.session || !req.session.uuid) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+console.log('intent session uuid is: ', req.session.uuid);
+
+    const foundUser = await db.getUserByUUID(req.session.uuid);
+    if(!foundUser || !foundUser.keys || foundUser.uuid !== req.session.uuid) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    const uuid = req.session.uuid;
+    const message = timestamp + req.session.uuid + amount + currency;
+
+    sessionless.getKeys = () => foundUser.keys;
+
+    body.signature = await sessionless.sign(message);
+
+    sessionless.getKeys = db.getKeys;
+
+    const processor = 'stripe';
+    const url = `${addie.baseURL}user/${uuid}/processor/${processor}/intent`;
+    const resp = await fetch(url, {
+      method: 'post',
+      body: JSON.stringify(body),
+      headers: {'Content-Type': 'application/json'}
+    });
+    const intent = await resp.json();
+
+    res.send(intent);
+  } catch(err) {
+console.warn(err);
+    res.status(404); 
+    res.send({error: 'not found'});
+  }
 });
 
 app.listen(process.env.PORT || 7243);
