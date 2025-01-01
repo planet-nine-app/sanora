@@ -30,7 +30,7 @@
 </teleport>
 <br>
 <br>
-<form id="payment-form" class="payment-form" style="display: none;">
+<form id="payment-form" class="payment-form">
     <div id="payment-element">
     </div>
     <button id="submit-button">Pay now</button>
@@ -48,7 +48,7 @@
   const errorMessage = document.getElementById('error-message');
   const loadingMessage = document.getElementById('loading');
 
-  function getPaymentIntentWithoutSplits(amount, currency) {
+  async function getPaymentIntentWithoutSplits(amount, currency) {
     try {
       const payload = {
 	timestamp: new Date().getTime() + '',
@@ -57,11 +57,14 @@
 	payees: [] 
       };
 
-      const message = payload.timestamp + savedUser.uuid + payload.amount + payload.currency;
-  
-      payload.signature = await sessionless.sign(message);
-  
-      const res = await post(`${baseURL}user/${savedUser.uuid}/processor/stripe/intent`, payload);
+      const res = await fetch(`http://127.0.0.1:7243/processor/stripe/intent`, {
+        method: 'put',
+        body: JSON.stringify(payload),
+        headers: {'Content-Type': 'application/json'}
+      });
+
+      const response = await res.json();
+console.log('got intent response', response);
 
       stripe = Stripe(response.publishableKey);
       elements = stripe.elements({
@@ -122,6 +125,16 @@ console.warn('payment error: ', err);
     submitButton.disabled = isLoading;
     loadingMessage.style.display = isLoading ? 'block' : 'none';
   };
+
+  const start = () => {
+    getPaymentIntentWithoutSplits({{amount}}, 'USD');
+  };
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
 </script>
 </body>
 </html>

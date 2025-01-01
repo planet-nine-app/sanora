@@ -145,7 +145,8 @@ it('should get payment intent', async () => {
 
   const res = await superAgent.put(`${baseURL}processor/stripe/intent`)
     .set('Cookie', savedUser['set-cookie'])
-    .set('Content-Type', 'application/json');
+    .set('Content-Type', 'application/json')
+    .send(payload);
   
   console.log(res.body);
 });

@@ -335,15 +335,24 @@ console.log('intent session uuid is: ', req.session.uuid);
 
     sessionless.getKeys = () => foundUser.keys;
 
-    body.signature = await sessionless.sign(message);
+    const signature = await sessionless.sign(message);
 
     sessionless.getKeys = db.getKeys;
 
+    const payload = {
+      timestamp,
+      amount,
+      uuid, 
+      currency,
+      signature
+    };
+console.log('sending this to addie', payload);
+
     const processor = 'stripe';
-    const url = `${addie.baseURL}user/${uuid}/processor/${processor}/intent`;
+    const url = `${addie.baseURL}user/${uuid}/processor/${processor}/intent-without-splits`;
     const resp = await fetch(url, {
       method: 'post',
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
       headers: {'Content-Type': 'application/json'}
     });
     const intent = await resp.json();
@@ -354,6 +363,10 @@ console.warn(err);
     res.status(404); 
     res.send({error: 'not found'});
   }
+});
+
+app.get('/images/:imageUUID', async (req, res) => {
+  res.sendFile(path.resolve('.', `images/${req.params.imageUUID}`));
 });
 
 app.listen(process.env.PORT || 7243);
