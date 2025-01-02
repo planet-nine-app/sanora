@@ -1,11 +1,16 @@
 import fs from 'fs';
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import sessionless from 'sessionless-node';
 import db from '../persistence/db.js';
 
-const baseURL = process.env.baseURL || 'http://127.0.0.1:7243/';
-const genericHTML = fs.readFileSync('./templates/generic.html');
-await sessionless.generateKeys(() => {}, db.getKeys);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
+const baseURL = process.env.baseURL || 'http://127.0.0.1:7243/';
+//const genericHTML = fs.readFileSync(path.resolve('.', 'templates/generic.html'));
+const genericHTML = fs.readFileSync(join(__dirname, '../..', 'templates', 'generic.html'));
+await sessionless.generateKeys(() => {}, db.getKeys);
 
 const generic = {
   htmlForProduct: async (product) => {
