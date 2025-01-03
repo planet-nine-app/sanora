@@ -1,9 +1,14 @@
 import { should } from 'chai';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 should();
 import sessionless from 'sessionless-node';
 import superAgent from 'superagent';
 
-const baseURL = 'http://127.0.0.1:7243/';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const baseURL = process.env.DEV ? 'https://dev.sanora.allyabase.com/' : 'http://127.0.0.1:7243/';
 
 const get = async function(path) {
   console.info("Getting " + path);
@@ -100,7 +105,7 @@ it('should put an artifact for the product', async () => {
   const signature = await sessionless.sign(message);
 
   const res = await superAgent.put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}/artifact`)
-    .attach('artifact', './book.epub')
+    .attach('artifact', join(__dirname, 'book.epub'))
     .set('x-pn-timestamp', timestamp)
     .set('x-pn-signature', signature);
 
@@ -115,7 +120,7 @@ it('should put an image for the product', async () => {
   const signature = await sessionless.sign(message);
 
   const res = await superAgent.put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}/image`)
-    .attach('image', './image.png')
+    .attach('image', join(__dirname, 'image.png'))
     .set('x-pn-timestamp', timestamp)
     .set('x-pn-signature', signature);
 

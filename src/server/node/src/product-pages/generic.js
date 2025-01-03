@@ -1,11 +1,11 @@
 import fs from 'fs';
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import sessionless from 'sessionless-node';
 import db from '../persistence/db.js';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const baseURL = process.env.baseURL || 'http://127.0.0.1:7243/';
 //const genericHTML = fs.readFileSync(path.resolve('.', 'templates/generic.html'));
