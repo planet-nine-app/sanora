@@ -145,8 +145,6 @@ And then you can start putting products.
 > | name         |  required     | data type               | description                                                           |
 > |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
 > | artifact     |  true     | artifact type           | the artifact to upload   |
-> | timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
-> | signature    |  true     | string (signature)      | the signature from sessionless for the message  |
 
 
 ##### Responses
