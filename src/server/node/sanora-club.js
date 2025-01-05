@@ -4,6 +4,7 @@ import session from 'express-session';
 import store from 'memorystore';
 import db from './src/persistence/db.js';
 import generic from './src/product-pages/generic.js';
+import blog from './src/product-pages/blog.js';
 import gateway from 'magic-gateway-js';
 import addie from 'addie-js';
 import sessionless from 'sessionless-node';
@@ -265,6 +266,19 @@ console.warn(err);
   }
 });
 
+app.get('/products/:uuid/:title', async (req, res) => {
+  try {
+    const product = await db.getProduct(req.params.uuid, req.params.title);
+    res.send(product);    
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
+
+
 app.use(session({ 
   store: new MemoryStore({
     checkPeriod: 86400000 // prune expired entries every 24h
@@ -302,7 +316,16 @@ console.log(newAddieUser);
     }
 
     const product = await db.getProduct(req.params.uuid, req.params.title);
-    const html = await generic.htmlForProduct(product);
+    product.content = './artifacts/' + product.artifacts[0];
+
+    let html = "<div>not found</div>";
+    switch(req.params.type) {
+      case 'blog': html = await blog.htmlForProduct(product);
+      break;
+      default: html = await generic.htmlForProduct(product);
+      break;
+    }
+
     res.send(html);    
   } catch(err) {
 console.warn(err);

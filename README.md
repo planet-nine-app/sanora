@@ -136,7 +136,7 @@ And then you can start putting products.
 
 > | name         |  required     | data type               | description                                                           |
 > |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | x-pn-artifact-type        |  true     | jpg | png               | artifact type   |
+> | x-pn-artifact-type        |  true     | epub/pdf/md/etc | artifact type   |
 > | x-pn-timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
 > | x-pn-signature    |  true     | string (signature)      | the signature from sessionless for the message  |
 
@@ -161,7 +161,7 @@ TODO
 </details>
 
 <details>
- <summary><code>PUT</code> <code><b>/user/:uuid/product/:title/artifact/</b></code> <code>Puts an image for the product with the given title</code></summary>
+ <summary><code>PUT</code> <code><b>/user/:uuid/product/:title/image/</b></code> <code>Puts an image for the product with the given title</code></summary>
 
 ##### Headers
 
@@ -174,7 +174,7 @@ TODO
 
 > | name         |  required     | data type               | description                                                           |
 > |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | image        |  true     | jpg | png               | the image for the product   |
+> | image        |  true     | jpg/png                 | the image for the product   |
 > | timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
 > | signature    |  true     | string (signature)      | the signature from sessionless for the message  |
 

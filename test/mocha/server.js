@@ -141,6 +141,45 @@ console.log('headers:', res.headers);
   res.text.indexOf('My product').should.not.equal(-1);
 });
 
+it('should put a blog', async () => {
+  const title = 'My blog';
+  const payload = {
+    timestamp: new Date().getTime() + '',
+    description: 'Lorem ipsum blog time baby!',
+    price: 1000
+  };
+
+  const message = payload.timestamp + savedUser.uuid + title + payload.description + payload.price;
+  payload.signature = await sessionless.sign(message);
+
+  const res = await put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}`, payload);
+console.log('product meta,', res.body);
+  res.body.title.should.equal(title);
+});
+
+it('should put an artifact for the blog', async () => {
+  const timestamp = new Date().getTime() + '';
+  const title = 'My blog';
+
+  const message = timestamp + savedUser.uuid + title;
+  const signature = await sessionless.sign(message);
+
+  const res = await superAgent.put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}/artifact`)
+    .attach('artifact', join(__dirname, 'sessionless.md'))
+    .set('x-pn-timestamp', timestamp)
+    .set('x-pn-signature', signature);
+
+  res.body.success.should.equal(true);
+});
+
+it('should get blog html', async () => {
+  const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My blog')}/blog`);
+console.log('here is the resp from blog html', res.text);
+console.log('headers:', res.headers);
+  savedUser['set-cookie'] = res.headers['set-cookie'];
+  res.text.indexOf('Sessionless').should.not.equal(-1);
+});
+
 it('should get payment intent', async () => {
   const payload = {
     timestamp: new Date().getTime() + '',
