@@ -266,19 +266,6 @@ console.warn(err);
   }
 });
 
-app.get('/products/:uuid/:title', async (req, res) => {
-  try {
-    const product = await db.getProduct(req.params.uuid, req.params.title);
-    res.send(product);    
-  } catch(err) {
-console.warn(err);
-    res.status(404);
-    res.send({error: 'not found'});
-  }
-});
-
-
-
 app.use(session({ 
   store: new MemoryStore({
     checkPeriod: 86400000 // prune expired entries every 24h
@@ -367,6 +354,62 @@ console.log('intent session uuid is: ', req.session.uuid);
       amount,
       uuid, 
       currency,
+      signature
+    };
+console.log('sending this to addie', payload);
+
+    const processor = 'stripe';
+    const url = `${addie.baseURL}user/${uuid}/processor/${processor}/intent-without-splits`;
+    const resp = await fetch(url, {
+      method: 'post',
+      body: JSON.stringify(payload),
+      headers: {'Content-Type': 'application/json'}
+    });
+    const intent = await resp.json();
+
+    res.send(intent);
+  } catch(err) {
+console.warn(err);
+    res.status(404); 
+    res.send({error: 'not found'});
+  }
+});
+
+app.put('/processor/square/intent', async (req, res) => {
+  try {
+    const body = req.body;
+    const timestamp = body.timestamp;
+    const amount = body.amount;
+    const currency = body.currency;
+    const nonce = body.sourceId;
+
+    if(!req.session || !req.session.uuid) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+console.log('intent session uuid is: ', req.session.uuid);
+
+    const foundUser = await db.getUserByUUID(req.session.uuid);
+    if(!foundUser || !foundUser.keys || foundUser.uuid !== req.session.uuid) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    const uuid = req.session.uuid;
+    const message = timestamp + req.session.uuid + amount + currency;
+
+    sessionless.getKeys = () => foundUser.keys;
+
+    const signature = await sessionless.sign(message);
+
+    sessionless.getKeys = db.getKeys;
+
+    const payload = {
+      timestamp,
+      amount,
+      uuid, 
+      currency,
+      nonce,
       signature
     };
 console.log('sending this to addie', payload);
