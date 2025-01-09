@@ -62,11 +62,17 @@ console.log('putting product', product);
     product.uuid = uuid;
     await client.set(`${user.uuid}:product:${product.title}`, JSON.stringify(product));
     
-    const titlesJSON = (await client.get(`products:${uuid}`)) || '{}';
-    const titles = JSON.parse(titlesJSON);
-    titles[product.title] = product;
-    await client.set(`products:${uuid}`, JSON.stringify(titles));
+    const productsJSON = (await client.get(`products:${uuid}`)) || '{}';
+    const products = JSON.parse(productsJSON);
+    products[product.title] = product;
+    await client.set(`products:${uuid}`, JSON.stringify(products));
     return product;
+  },
+
+  getProducts: async (uuid) => {
+    const productsJSON = (await client.get(`products:${uuid}`)) || '{}';
+    const products = JSON.parse(productsJSON);
+    return products;
   },
 
   getProduct: async (uuid, title) => {
