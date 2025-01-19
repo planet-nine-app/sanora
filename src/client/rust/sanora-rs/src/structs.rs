@@ -26,7 +26,7 @@ impl Default for AddieUser {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
-pub struct AddieUser {
+pub struct SanoraUser {
     #[serde(default)]
     pub pub_key: String,
     pub uuid: String,
@@ -40,7 +40,7 @@ impl Default for SanoraUser {
         SanoraUser {
             pub_key: "".to_string(),
             uuid: "".to_string(),
-            addie_user: AddieUser()
+            addie_user: AddieUser::default()
         }   
     }   
 }
@@ -52,6 +52,18 @@ pub struct ProductMeta {
     pub description: String,
     pub price: u32,
     pub artifacts: Vec<String>
+}
+
+impl Default for ProductMeta {
+    fn default() -> Self {
+        ProductMeta {
+            uuid: "".to_string(),
+            title: "".to_string(),
+            description: "".to_string(),
+            price: 0,
+            artifacts: Vec::<String>::new()
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

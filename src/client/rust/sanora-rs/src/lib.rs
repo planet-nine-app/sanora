@@ -10,7 +10,7 @@ use sessionless::hex::IntoHex;
 use sessionless::{Sessionless, Signature};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
-use crate::structs::{SanoraUser, SuccessResult};
+use crate::structs::{AddieUser, ProductMeta, SanoraUser, SuccessResult};
 
 pub struct Sanora {
     base_url: String,
@@ -112,9 +112,9 @@ impl Sanora {
         Ok(user)
     }
 
-    pub async fn add_product(&self, uuid: &str, title: &str, description: &str, price: &u32) -> Result<SuccessResult, Box<dyn std::error::Error>> {
+    pub async fn add_product(&self, uuid: &str, title: &str, description: &str, price: &u32) -> Result<ProductMeta, Box<dyn std::error::Error>> {
         let timestamp = Self::get_timestamp();
-        let message = format!("{}{}{}{}{}", timestamp, uuid, title, desription, price);
+        let message = format!("{}{}{}{}{}", timestamp, uuid, title, description, price);
         let signature = self.sessionless.sign(&message).to_hex();
 
         let payload = json!({
@@ -131,14 +131,14 @@ impl Sanora {
         Ok(meta)
     }
 
-    pub async fn put_artifact_for_product(&self, uuid: &str, title: &str, artifact: &str) -> Result<SuccessResult, Box<dyn std::error::Error>> {
+    /*pub async fn put_artifact_for_product(&self, uuid: &str, title: &str, artifact: &str) -> Result<SuccessResult, Box<dyn std::error::Error>> {
         // TODO: in tauri, uploading of files happens via the web side, and not the rust side, so punting on this for now.
     }
 
     pub async fn put_image_for_product(&self, uuid: &str, title: &str, image: &str) -> Result<SuccessResult, Box<dyn std::error::Error>> {
        // TODO: in tauri, uploading of files happens via the web side, and not the rust side, so punting on this for no
 w.  
-    }
+    }*/
 
     // TODO: The rest lol
 

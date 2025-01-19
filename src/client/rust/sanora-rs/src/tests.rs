@@ -1,4 +1,4 @@
-use crate::{SanoraUser, SanoraUser, SuccessResult, PaymentIntent};
+use crate::{AddieUser, ProductMeta, Sanora, SanoraUser, SuccessResult};
 use sessionless::hex::IntoHex;
 use std::collections::HashMap;
 use serde_json::json;
@@ -9,7 +9,7 @@ use rand::Rng;
 async fn test_sanora() {
 
     let mut saved_user: Option<SanoraUser>;
-    let sanora = Sanora::new(Some("http://localhost:7243/".to_string()));
+    let sanora = Sanora::new(Some("http://localhost:7243/".to_string()), None);
 
     async fn create_user(sanora: &Sanora) -> Option<SanoraUser> {
 	let result = sanora.create_user().await;
@@ -71,12 +71,12 @@ async fn test_sanora() {
         } 
     }*/
 
-    async fn add_product(sanora: &Sanora, saved_user: &SanoraUser) -> Option<SanoraUser> {
+    async fn add_product(sanora: &Sanora, saved_user: &SanoraUser) -> Option<ProductMeta> {
         let title = "My rust title".to_string();
         let description = "Here is a description of my sweet product".to_string();
         let price = 2000;
   
-        let result = sanora.add_product(&saved_user.uuid, &title, &description, &price);
+        let result = sanora.add_product(&saved_user.uuid, &title, &description, &price).await;
 
         match result {
             Ok(meta) => {
@@ -84,6 +84,7 @@ async fn test_sanora() {
                     meta.uuid.len(),
                     36
                 );
+                Some(meta)
             }
             Err(error) => {
                 eprintln!("Error occured adding product: {}", error);
@@ -161,7 +162,12 @@ async fn test_sanora() {
         panic!("Failed to get user");
     }
 
-    Some(add_product(&sanora, saved_user).await.expect("add product"));
+    if let Some(ref user) = saved_user {
+        Some(add_product(&sanora, user).await.expect("add product"));
+    } else {
+        panic!("Failed to add product");
+    }
+
 
 /*    if let Some(ref user) = saved_user {
 	Some(add_processor_account(&sanora, user).await.expect("add processor"));
