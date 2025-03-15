@@ -8,7 +8,7 @@ import superAgent from 'superagent';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const baseURL = process.env.DEV ? 'https://dev.sanora.allyabase.com/' : 'http://127.0.0.1:7243/';
+const baseURL = process.env.SUB_DOMAIN ? `https://${process.env.SUB_DOMAIN}.sanora.allyabase.com/` : 'http://127.0.0.1:7243/';
 
 const get = async function(path) {
   console.info("Getting " + path);
@@ -131,6 +131,12 @@ it('should put an image for the product', async () => {
 it('should get product', async () => {
   const res = await get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}`);
   res.body.title.should.equal('My product');
+});
+
+it('should get products', async () => {
+  const res = await get(`${baseURL}products/${savedUser.uuid}`);
+console.log('products body', res.body);
+  res.body.should.equal('foo');
 });
 
 it('should get product html', async () => {
