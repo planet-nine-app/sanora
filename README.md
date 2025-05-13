@@ -191,3 +191,54 @@ TODO
 TODO
 
 </details>
+
+<details>
+ <summary><code>PUT</code> <code><b>/user/:uuid/orders</b></code> <code>Puts an image for the product with the given title</code></summary>
+
+##### Parameters
+
+> | name         |  required     | data type               | description                                                           |
+> |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
+> | order        |  true     | string                  | the order object to store. Can contain any data you'd like
+> | signature    |  true     | string (signature)      | the signature from sessionless for the message  |
+
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json`                | `USER`   |
+> | `400`         | `application/json`                | `{"code":"400","message":"Bad Request"}`                            |
+
+##### Example cURL
+
+TODO
+
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>/user/:uuid/orders</b></code> <code>gets orders. Can take optional params for filtering orders</code></summary>
+
+##### Parameters
+
+> | name         |  required     | data type               | description                                                           |
+> |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | timestamp    |  true     | string                  | in a production system timestamps narrow window for replay attacks  |
+> | pubKey       |  false    | string                  | get orders for a specific pubKey
+> | product      |  false    | string                  | get orders of a specific product
+> | signature    |  true     | string (signature)      | the signature from sessionless for the message  |
+
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json`                | `USER`   |
+> | `400`         | `application/json`                | `{"code":"400","message":"Bad Request"}`                            |
+
+##### Example cURL
+
+TODO
+
+</details>

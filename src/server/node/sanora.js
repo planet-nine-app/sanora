@@ -446,5 +446,59 @@ app.get('/images/:imageUUID', async (req, res) => {
   res.sendFile(path.resolve('.', `images/${req.params.imageUUID}`));
 });
 
+app.put('/user/:uuid/orders', async (req, res) => {
+  try {
+    const uuid = req.params.uuid;
+    const timestamp = req.body.timestamp;
+    const order = req.body.order;
+    const signature = req.body.signature;
+    
+    const message = timestamp + uuid;
+
+    const foundUser = await db.getUserByUUID(uuid);
+
+    if(!signature || !sessionless.verifySignature(signature, message, foundUser.pubKey)) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    // TODO: There needs to be some step here that verifies that payment has settled
+
+    await db.saveOrder(order);
+
+    res.send(foundUser);
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
+app.get('/user/:uuid/orders', async (req, res) => {
+  try {
+    const uuid = req.params.uuid;
+    const timestamp = req.query.timestamp;
+    const signature = req.query.signature;
+
+    const message = timestamp + uuid;
+
+    const foundUser = await db.getUserByUUID(uuid);
+
+    if(!signature || !sessionless.verifySignature(signature, message, foundUser.pubKey)) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    // TODO: add in the filtering for orders
+    const orders = await db.getOrders();
+
+    res.send({orders});
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
 app.listen(process.env.PORT || 7243);
 console.log('Join the club');
