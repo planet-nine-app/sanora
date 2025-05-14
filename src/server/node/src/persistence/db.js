@@ -80,6 +80,41 @@ console.log('putting product', product);
       throw new Error('not found');
     }
     return JSON.parse(product);
+  },
+
+  putOrder: async (user, order) => {
+    const userOrdersKey = `user:${user.uuid}:orders`;
+    const productOrdersKey = `product:${order.productId}:orders`;
+
+    const userOrdersJSON = (await client.get(userOrdersKey)) || '[]';
+    const productOrdersJSON = (await client.get(productOrdersKey)) || '[]';
+
+    const userOrders = JSON.parse(userOrdersJSON);
+    const productOrders = JSON.parse(productOrdersJSON);
+
+    userOrders.push(order);
+    productOrders.push(order);
+
+    await client.set(userOrdersKey, JSON.stringify(userOrders));
+    await client.set(productOrdersKey, JSON.stringify(productOrders));
+
+    return true;
+  },
+
+  getOrdersForUser: async (user) => {
+    const userOrdersKey = `user:${user.uuid}:orders`;
+
+    const userOrdersJSON = (await client.get(userOrdersKey)) || '[]';
+
+    return JSON.parse(userOrdersJSON);
+  },
+
+  getOrdersForProduct: async (productId) => {
+    const productOrdersKey = `product:${productId}:orders`;
+
+    const productOrdersJSON = (await client.get(productOrdersKey)) || '[]';
+
+    return JSON.parse(productOrdersJSON);
   }
 
 };

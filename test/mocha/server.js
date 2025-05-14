@@ -201,3 +201,31 @@ it('should get payment intent', async () => {
   console.log(res.body);
 });
 
+it('should put order', async () => {
+  const payload = {
+    timestamp: new Date().getTime() + '',
+    order: {
+      foo: 'bar',
+      baz: 'bop'
+    }
+  };
+
+  const message = payload.timestamp + savedUser.uuid;
+
+  payload.signature = await sessionless.sign(message);
+
+  const res = await put(`${baseURL}user/${savedUser.uuid}/orders`, payload);
+
+  res.body.uuid.should.equal(savedUser.uuid);
+});
+
+it('should get orders', async () => {
+  const timestamp = new Date().getTime() + '';
+  const message = timestamp + savedUser.uuid;
+  const signature = await sessionless.sign(message);
+
+  const res = await get(`${baseURL}user/${savedUser.uuid}/orders`);
+
+  res.body.orders.length.should.not.equal(0);
+});
+

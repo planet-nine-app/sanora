@@ -474,9 +474,10 @@ console.warn(err);
   }
 });
 
-app.get('/user/:uuid/orders', async (req, res) => {
+app.get('/user/:uuid/orders/:productId', async (req, res) => {
   try {
     const uuid = req.params.uuid;
+    const productId = req.params.productId;
     const timestamp = req.query.timestamp;
     const signature = req.query.signature;
 
@@ -490,7 +491,7 @@ app.get('/user/:uuid/orders', async (req, res) => {
     }
 
     // TODO: add in the filtering for orders
-    const orders = await db.getOrders();
+    const orders = await db.getOrdersForProduct(productId);
 
     res.send({orders});
   } catch(err) {
