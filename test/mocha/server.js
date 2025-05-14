@@ -205,6 +205,7 @@ it('should put order', async () => {
   const payload = {
     timestamp: new Date().getTime() + '',
     order: {
+      productId: 'foo',
       foo: 'bar',
       baz: 'bop'
     }
@@ -215,6 +216,7 @@ it('should put order', async () => {
   payload.signature = await sessionless.sign(message);
 
   const res = await put(`${baseURL}user/${savedUser.uuid}/orders`, payload);
+console.log(res.body);
 
   res.body.uuid.should.equal(savedUser.uuid);
 });
@@ -224,7 +226,8 @@ it('should get orders', async () => {
   const message = timestamp + savedUser.uuid;
   const signature = await sessionless.sign(message);
 
-  const res = await get(`${baseURL}user/${savedUser.uuid}/orders`);
+  const res = await get(`${baseURL}user/${savedUser.uuid}/orders/foo?timestamp=${timestamp}&signature=${signature}`);
+console.log(res.body);
 
   res.body.orders.length.should.not.equal(0);
 });
