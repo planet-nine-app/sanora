@@ -464,7 +464,7 @@ app.put('/user/:uuid/orders', async (req, res) => {
 
     // TODO: There needs to be some step here that verifies that payment has settled
 
-    await db.putOrder(order);
+    await db.putOrder(foundUser, order);
 
     res.send(foundUser);
   } catch(err) {
