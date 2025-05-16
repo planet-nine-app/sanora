@@ -91,3 +91,14 @@ impl PaymentIntent {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct Order {
+    pub productId: String,
+    pub address1: Option<String>,
+    pub address2: Option<String>,
+    pub city: Option<String>,
+    pub state: Option<String>,
+    pub zipCode: Option<String>
+}
+

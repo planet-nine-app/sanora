@@ -10,7 +10,7 @@ use sessionless::hex::IntoHex;
 use sessionless::{Sessionless, Signature};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
-use crate::structs::{AddieUser, ProductMeta, SanoraUser, SuccessResult};
+use crate::structs::{AddieUser, Order, ProductMeta, SanoraUser, SuccessResult};
 
 pub struct Sanora {
     base_url: String,
@@ -129,6 +129,24 @@ impl Sanora {
         let meta: ProductMeta = res.json().await?;
 
         Ok(meta)
+    }
+
+    pub async fn add_order(&self, uuid: &str, order: &Order) -> Result<SanoraUser, Box<dyn std::error::Error>> {
+        let timestamp = Self::get_timestamp();
+        let message = format!("{}{}", timestamp, uuid);
+        let signature = self.sessionless.sign(&message).to_hex();
+
+        let payload = json!({
+            "timestamp": timestamp,
+            "order": order,
+            "signature": signature
+        }).as_object().unwrap().clone();
+
+        let url = format!("{}user/{}/orders", self.base_url, uuid);
+        let res = self.put(&url, serde_json::Value::Object(payload)).await?;
+        let user: SanoraUser = res.json().await?;
+
+        Ok(user)
     }
 
     /*pub async fn put_artifact_for_product(&self, uuid: &str, title: &str, artifact: &str) -> Result<SuccessResult, Box<dyn std::error::Error>> {

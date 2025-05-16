@@ -1,4 +1,4 @@
-use crate::{AddieUser, ProductMeta, Sanora, SanoraUser, SuccessResult};
+use crate::{AddieUser, Order, ProductMeta, Sanora, SanoraUser, SuccessResult};
 use sessionless::hex::IntoHex;
 use std::collections::HashMap;
 use serde_json::json;
@@ -93,6 +93,42 @@ async fn test_sanora() {
             }
         }
     }
+
+    async fn add_order(sanora: &Sanora, saved_user: &SanoraUser) -> Option<SanoraUser> {
+        let productId = "foo-bar-baz".to_string();
+        let address1 = "123 A Ave".to_string();
+        let city = "Portland".to_string();
+        let state = "OR".to_string();
+        let zipCode = "12345".to_string();
+
+        let order = Order {
+          productId,
+          address1: Some(address1),
+          address2: None,
+          city: Some(city),
+          state: Some(state),
+          zipCode: Some(zipCode)
+        };
+  
+        let result = sanora.add_order(&saved_user.uuid, &order).await;
+
+        match result {
+            Ok(meta) => {
+               assert_eq!(
+                    meta.uuid.len(),
+                    36
+                );
+                Some(meta)
+            }
+            Err(error) => {
+                eprintln!("Error occured adding product: {}", error);
+                println!("Error details: {:?}", error);
+                None
+            }
+        }
+    }
+
+
 
 /*
 
