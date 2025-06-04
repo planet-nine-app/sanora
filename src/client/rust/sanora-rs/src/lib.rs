@@ -10,12 +10,18 @@ use sessionless::hex::IntoHex;
 use sessionless::{Sessionless, Signature};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
-use crate::structs::{AddieUser, Order, ProductMeta, SanoraUser, SuccessResult};
+use crate::structs::{Order, ProductMeta, SanoraUser, SuccessResult};
 
 pub struct Sanora {
     base_url: String,
     client: Client,
     pub sessionless: Sessionless,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct Orders {
+  orders: Vec<Order>
 }
 
 impl Sanora {
@@ -129,6 +135,18 @@ impl Sanora {
         let meta: ProductMeta = res.json().await?;
 
         Ok(meta)
+    }
+
+    pub async fn get_orders_for_product_id(&self, uuid: &str, product_id: &str) -> Result<Orders, Box<dyn std::error::Error>> {
+        let timestamp = Self::get_timestamp();
+        let message = format!("{}{}", timestamp, uuid);
+        let signature = self.sessionless.sign(&message).to_hex();
+
+        let url = format!("{}user/{}/orders/{}?timestamp={}&signature={}", self.base_url, uuid, product_id, timestamp, signature);
+        let res = self.get(&url).await?;
+        let orders = res.json().await?;
+
+        Ok(orders)
     }
 
     pub async fn add_order(&self, uuid: &str, order: &Order) -> Result<SanoraUser, Box<dyn std::error::Error>> {

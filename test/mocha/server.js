@@ -141,7 +141,16 @@ console.log('products body', res.body);
 
 it('should get product html', async () => {
   const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic`);
-console.log(res.text);
+//console.log(res.text);
+console.log('headers:', res.headers);
+  savedUser['set-cookie'] = res.headers['set-cookie'];
+  res.text.indexOf('My product').should.not.equal(-1);
+});
+
+it('should get product html with address and stripe', async () => {
+  console.log('getting product at this url: ', `${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic-address-stripe`);
+  const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic-address-stripe`);
+console.log('here is the address site', res.text);
 console.log('headers:', res.headers);
   savedUser['set-cookie'] = res.headers['set-cookie'];
   res.text.indexOf('My product').should.not.equal(-1);
@@ -227,7 +236,7 @@ it('should get orders', async () => {
   const signature = await sessionless.sign(message);
 
   const res = await get(`${baseURL}user/${savedUser.uuid}/orders/foo?timestamp=${timestamp}&signature=${signature}`);
-console.log(res.body);
+console.log('orders::::::::', res.body);
 
   res.body.orders.length.should.not.equal(0);
 });

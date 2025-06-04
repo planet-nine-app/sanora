@@ -5,6 +5,7 @@ import store from 'memorystore';
 import db from './src/persistence/db.js';
 import generic from './src/product-pages/generic.js';
 import blog from './src/product-pages/blog.js';
+import genericAddressStripe from './src/product-pages/generic-address-stripe.js';
 import gateway from 'magic-gateway-js';
 import addie from 'addie-js';
 import sessionless from 'sessionless-node';
@@ -319,6 +320,8 @@ console.log(newAddieUser);
     let html = "<div>not found</div>";
     switch(req.params.type) {
       case 'blog': html = await blog.htmlForProduct(product);
+      break;
+      case 'generic-address-stripe': html = await genericAddressStripe.htmlForProduct(product);
       break;
       default: html = await generic.htmlForProduct(product);
       break;

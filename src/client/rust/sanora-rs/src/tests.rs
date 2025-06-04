@@ -128,6 +128,26 @@ async fn test_sanora() {
         }
     }
 
+    async fn get_orders(sanora: &Sanora, saved_user: &SanoraUser) -> Option<Orders> {
+        let productId = "foo-bar-baz".to_string();
+
+        let result = sanora.get_orders_for_product_id(&saved_user.uuid, &product_id);
+        
+        match result {
+            Ok(meta) => {
+               assert_eq!(
+                    meta.orders.len(),
+                    1
+                );
+                Some(meta)
+            }
+            Err(error) => {
+                eprintln!("Error occured getting products: {}", error);
+                println!("Error details: {:?}", error);
+                None
+            }
+        }
+    }
 
 
 /*
