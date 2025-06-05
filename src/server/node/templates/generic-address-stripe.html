@@ -259,6 +259,15 @@ console.log('got intent response', response);
   };
 
   window.confirmPayment = async () => {
+    const order = {
+      productId,
+      formData
+    };
+    await fetch('/user/orders', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(order)
+    });
     const redirect = 'what should this be?';
     try {
       const { error } = await stripe.confirmPayment({

@@ -477,6 +477,45 @@ console.warn(err);
   }
 });
 
+app.put('/user/orders', async (req, res) => {
+  try {
+    const timestamp = req.body.timestamp;
+    const order = req.body.order;
+    const signature = req.body.signature;
+
+    if(!req.session || !req.session.uuid) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+console.log('intent session uuid is: ', req.session.uuid);
+
+    const foundUser = await db.getUserByUUID(req.session.uuid);
+    if(!foundUser || !foundUser.keys || foundUser.uuid !== req.session.uuid) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    const uuid = req.session.uuid;
+
+    const message = timestamp + uuid;
+
+    if(!signature || !sessionless.verifySignature(signature, message, foundUser.pubKey)) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    // TODO: There needs to be some step here that verifies that payment has settled
+
+    await db.putOrder(foundUser, order);
+
+    res.send(foundUser);
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
 app.get('/user/:uuid/orders/:productId', async (req, res) => {
   try {
     const uuid = req.params.uuid;
