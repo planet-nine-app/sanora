@@ -481,7 +481,6 @@ app.put('/user/orders', async (req, res) => {
   try {
     const timestamp = req.body.timestamp;
     const order = req.body.order;
-    const signature = req.body.signature;
 
     if(!req.session || !req.session.uuid) {
       res.status(403);
@@ -498,6 +497,12 @@ console.log('intent session uuid is: ', req.session.uuid);
     const uuid = req.session.uuid;
 
     const message = timestamp + uuid;
+
+    sessionless.getKeys = () => foundUser.keys;
+
+    const signature = await sessionless.sign(message);
+
+    sessionless.getKeys = db.getKeys;
 
     if(!signature || !sessionless.verifySignature(signature, message, foundUser.pubKey)) {
       res.status(403);
