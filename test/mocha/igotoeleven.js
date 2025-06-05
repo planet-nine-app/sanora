@@ -113,4 +113,13 @@ console.log('headers:', res.headers);
   res.text.indexOf('I Go To Eleven Toddler Tee').should.not.equal(-1);
 });
 
+it('should get orders', async () => {
+  const timestamp = new Date().getTime() + '';
+  const message = timestamp + savedUser.uuid;
+  const signature = await sessionless.sign(message);
+  
+  const res = await get(`${baseURL}user/${savedUser.uuid}/orders/40010bef-0bfd-43d2-bfbc-b48c5261104e?timestamp=${timestamp}&signature=${signature}`);
+console.log('orders::::::::', res.body);
 
+  res.body.orders.length.should.not.equal(0);
+});
