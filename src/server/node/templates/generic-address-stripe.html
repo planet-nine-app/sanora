@@ -270,7 +270,7 @@ console.log('got intent response', response);
     await fetch('/user/orders', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(order)
+      body: JSON.stringify({timestamp: new Date().getTime() + '', order})
     });
     const redirect = 'what should this be?';
     try {
