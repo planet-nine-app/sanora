@@ -20,6 +20,7 @@ const genericAddressStripe = {
 
     let productHTML = `${genericAddressStripeHTML}`;
     productHTML = productHTML.replace(/{{title}}/g, product.title)
+      .replace(/{{productId}}/g, product.productId)
       .replace(/{{description}}/g, product.description)
       .replace(/{{image}}/g, `${baseURL}images/${product.image}`)
       .replace(/{{amount}}/g, product.price)

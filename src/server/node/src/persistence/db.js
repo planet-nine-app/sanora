@@ -59,6 +59,7 @@ console.log('throwing');
 console.log('putting product', product);
     const uuid = user.uuid;
     product.uuid = uuid;
+    product.productId = sessionless.generateUUID();
     await client.set(`${user.uuid}:product:${product.title}`, JSON.stringify(product));
     
     const productsJSON = (await client.get(`products:${uuid}`)) || '{}';
