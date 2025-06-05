@@ -22,7 +22,7 @@ const genericAddressStripe = {
     productHTML = productHTML.replace(/{{title}}/g, product.title)
       .replace(/{{productId}}/g, product.productId)
       .replace(/{{description}}/g, product.description)
-      .replace(/{{image}}/g, ``https://${window.location.host}/images/${product.image}`)
+      .replace(/{{image}}/g, `https://${window.location.host}/images/${product.image}`)
       .replace(/{{amount}}/g, product.price)
       .replace(/{{pubKey}}/g, keys.pubKey)
       .replace(/{{signature}}/g, signature);
