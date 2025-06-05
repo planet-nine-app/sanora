@@ -20,7 +20,10 @@
 <body>
 <teleport pubKey="{{pubKey}}" signature="{{signature}}" message="{{title}}{{description}}{{amount}}" spell="sanora-club" amount="{{amount}}">
 <div style="width:100%;overflow:hidden;">
-  <img style="width:100%;height:auto;" src="{{image}}"></img>
+  <img id="product-image" style="width:100%;height:auto;"></img>
+  <script type="text/javascript">
+    document.getElementById('product-image').src = {{image}};
+  </script>
   <br>
   <h2>{{title}}</h2>
   <br>
