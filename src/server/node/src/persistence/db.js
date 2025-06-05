@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { createClient } from './client.js';
 import sessionless from 'sessionless-node';
   
@@ -59,7 +60,7 @@ console.log('throwing');
 console.log('putting product', product);
     const uuid = user.uuid;
     product.uuid = uuid;
-    product.productId = sessionless.generateUUID();
+    product.productId = crypto.createHash('sha256').update(uuid + product.title).digest('hex');
     await client.set(`${user.uuid}:product:${product.productId}`, JSON.stringify(product));
     
     const productsJSON = (await client.get(`products:${uuid}`)) || '{}';
