@@ -237,7 +237,7 @@
 	payees: [] 
       };
 
-      const res = await fetch(`http://127.0.0.1:7243/processor/stripe/intent`, {
+      const res = await fetch(`processor/stripe/intent`, {
         method: 'put',
         body: JSON.stringify(payload),
         headers: {'Content-Type': 'application/json'}
