@@ -263,8 +263,8 @@ console.log('got intent response', response);
 
   window.confirmPayment = async () => {
     const order = {
-      title: {{title}},
-      productId: {{productId}},
+      title: "{{title}}",
+      productId: "{{productId}}",
       formData
     };
     await fetch('/user/orders', {
