@@ -295,7 +295,7 @@
       const dynamicHeight = calculateFormHeight(formJSON);
 
       const container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      container.setAttribute('viewBox', `0 0 500 ${dynamicHeight}`);
+      container.setAttribute('viewBox', `0 0 500 ${dynamicHeight + 100}`);
       container.setAttribute('width', '100%');
       container.setAttribute('height', 'auto');
       container.innerHTML = svg;
