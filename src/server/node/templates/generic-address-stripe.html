@@ -162,6 +162,37 @@
       return svg;
     }
 
+    function getSegmentedSelector(x, y, text, options) {
+      const borderId = `${text.replace(/\s+/g, '')}Border`;
+      const selectorId = `${text.replace(/\s+/g, '')}Selector`;
+      
+      const segmentWidth = 340 / options.length;
+      
+      let segments = '';
+      let segmentTexts = '';
+      
+      options.forEach((option, index) => {
+        const segmentX = x + (index * segmentWidth);
+        const segmentId = `${selectorId}_${index}`;
+        
+        segments += `<rect id="${segmentId}" x="${segmentX}" y="${y + 10}" width="${segmentWidth}" height="40" rx="${index === 0 ? '8 0 0 8' : index === options.length - 1 ? '0 8 8 0' : '0'}" fill="#1c1c20" stroke="#444" stroke-width="1" style="cursor: pointer;" data-option="${option}" data-selected="false"/>`;
+        
+        segmentTexts += `<text x="${segmentX + segmentWidth/2}" y="${y + 33}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb" text-anchor="middle" style="pointer-events: none;">${option}</text>`;
+      });
+
+      const svg = `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+        <!-- Segmented Container -->
+        <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="40" rx="8" fill="transparent" stroke="#444" stroke-width="2"/>
+        ${segments}
+        ${segmentTexts}
+        <!-- Hidden input to store value -->
+        <foreignObject x="${x}" y="${y + 55}" width="1" height="1" style="overflow: hidden;">
+          <input xmlns="http://www.w3.org/1999/xhtml" id="${selectorId}" type="hidden" data-field="${text}"/>
+        </foreignObject>`;
+
+      return svg;
+    }
+
     function getInput(x, y, text, inputType) {
       const borderId = `${text.replace(/\s+/g, '')}Border`;
       const inputId = `${text.replace(/\s+/g, '')}Input`;
@@ -182,15 +213,70 @@
     }
 
     function getSubmitButton(x, y) {
-      return `<rect id="submitButton" x="${x}" y="${y}" width="300" height="45" rx="22.5" fill="url(#buttonGradient)" style="cursor: pointer;">
+      return `<rect id="submitButton" x="${x}" y="${y}" width="300" height="45" rx="22.5" fill="#666666" style="cursor: not-allowed;">
 	  </rect>
-	  <text x="${x + 150}" y="${y + 28}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
+	  <text x="${x + 150}" y="${y + 28}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#999999" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
       `;
+    }
+
+    function enableSubmitButton() {
+      const submitButton = document.getElementById('submitButton');
+      const submitButtonText = submitButton.nextElementSibling;
+      
+      submitButton.setAttribute('fill', 'url(#buttonGradient)');
+      submitButton.setAttribute('style', 'cursor: pointer;');
+      submitButtonText.setAttribute('fill', 'white');
+    }
+
+    function disableSubmitButton() {
+      const submitButton = document.getElementById('submitButton');
+      const submitButtonText = submitButton.nextElementSibling;
+      
+      submitButton.setAttribute('fill', '#666666');
+      submitButton.setAttribute('style', 'cursor: not-allowed;');
+      submitButtonText.setAttribute('fill', '#999999');
+    }
+
+    function validateForm(formJSON) {
+      const requiredFields = Object.keys(formJSON).filter(key => 
+        key !== 'form' && formJSON[key].required
+      );
+      
+      const allValid = requiredFields.every(key => {
+        const fieldConfig = formJSON[key];
+        
+        if (fieldConfig.type === 'segmented') {
+          const selectorId = `${key.replace(/\s+/g, '')}Selector`;
+          const selector = document.getElementById(selectorId);
+          return selector && selector.value && selector.value.trim() !== '';
+        } else {
+          const inputId = `${key.replace(/\s+/g, '')}Input`;
+          const input = document.getElementById(inputId);
+          return input && input.value && input.value.trim() !== '';
+        }
+      });
+      
+      if (allValid) {
+        enableSubmitButton();
+      } else {
+        disableSubmitButton();
+      }
+      
+      return allValid;
     }
 
     function getForm(formJSON, onSubmit) {
       const keys = Object.keys(formJSON);
-      const inputs = keys.map((key, index) => key === "form" ? '' : getInput(80, 70 * index + 130, key, formJSON[key]));
+      const inputs = keys.map((key, index) => {
+        if (key === "form") return '';
+        
+        const fieldConfig = formJSON[key];
+        if (fieldConfig.type === 'segmented') {
+          return getSegmentedSelector(80, 70 * index + 130, key, fieldConfig.options);
+        } else {
+          return getInput(80, 70 * index + 130, key, fieldConfig.type);
+        }
+      });
       
       const svg = getBackgroundAndGradients() + inputs.join('') + getSubmitButton(100, 70 * (keys.length) + 130);
 
@@ -206,23 +292,76 @@
 	    return;
 	  }
 
+	  const fieldConfig = formJSON[key];
 	  const borderId = `${key.replace(/\s+/g, '')}Border`;
-	  const inputId = `${key.replace(/\s+/g, '')}Input`;
-	  const inputElement = document.getElementById(inputId);
 	  
-	  if (inputElement) {
-	    inputElement.addEventListener('input', (evt) => {
-	      const borderElement = document.getElementById(borderId);
-	      if (borderElement) {
-		borderElement.setAttribute('stroke', 'url(#inputGradient)');
+	  if (fieldConfig.type === 'segmented') {
+	    const selectorId = `${key.replace(/\s+/g, '')}Selector`;
+	    const selector = document.getElementById(selectorId);
+	    
+	    // Add click handlers for segments
+	    fieldConfig.options.forEach((option, optionIndex) => {
+	      const segmentId = `${selectorId}_${optionIndex}`;
+	      const segment = document.getElementById(segmentId);
+	      
+	      if (segment) {
+	        segment.addEventListener('click', () => {
+	          // Clear all segments
+	          fieldConfig.options.forEach((_, clearIndex) => {
+	            const clearSegmentId = `${selectorId}_${clearIndex}`;
+	            const clearSegment = document.getElementById(clearSegmentId);
+	            if (clearSegment) {
+	              clearSegment.setAttribute('fill', '#1c1c20');
+	              clearSegment.setAttribute('data-selected', 'false');
+	            }
+	          });
+	          
+	          // Select clicked segment
+	          segment.setAttribute('fill', '#3eda82');
+	          segment.setAttribute('data-selected', 'true');
+	          
+	          // Update hidden input value
+	          if (selector) {
+	            selector.value = option;
+	          }
+	          
+	          // Update border
+	          const borderElement = document.getElementById(borderId);
+	          if (borderElement) {
+	            borderElement.setAttribute('stroke', 'url(#inputGradient)');
+	          }
+	          
+	          // Validate form
+	          validateForm(formJSON);
+	        });
 	      }
 	    });
+	  } else {
+	    const inputId = `${key.replace(/\s+/g, '')}Input`;
+	    const inputElement = document.getElementById(inputId);
+	    
+	    if (inputElement) {
+	      inputElement.addEventListener('input', (evt) => {
+	        const borderElement = document.getElementById(borderId);
+	        if (borderElement) {
+	          borderElement.setAttribute('stroke', 'url(#inputGradient)');
+	        }
+	        
+	        // Validate form
+	        validateForm(formJSON);
+	      });
+	    }
 	  }
 	});
 
 	const submitButton = document.getElementById('submitButton');
 	if (submitButton) {
 	  submitButton.addEventListener('click', () => {
+	    if (!validateForm(formJSON)) {
+	      console.log('Form validation failed');
+	      return;
+	    }
+	    
 	    console.log('Submit button clicked');
 	    
 	    // Create button animation
@@ -255,10 +394,20 @@
 		return;
 	      }
 
-	      const inputId = `${key.replace(/\s+/g, '')}Input`;
-	      const inputElement = document.getElementById(inputId);
-	      if (inputElement) {
-		formValues[key] = inputElement.value;
+	      const fieldConfig = formJSON[key];
+	      
+	      if (fieldConfig.type === 'segmented') {
+	        const selectorId = `${key.replace(/\s+/g, '')}Selector`;
+	        const selector = document.getElementById(selectorId);
+	        if (selector) {
+	          formValues[key] = selector.value;
+	        }
+	      } else {
+	        const inputId = `${key.replace(/\s+/g, '')}Input`;
+	        const inputElement = document.getElementById(inputId);
+	        if (inputElement) {
+	          formValues[key] = inputElement.value;
+	        }
 	      }
 	    });
 
@@ -267,6 +416,9 @@
 	    }
 	  });
 	}
+	
+	// Initial validation
+	validateForm(formJSON);
       }, 100);
 
       return container;
@@ -279,12 +431,13 @@
 
 <script>
   const formConfig = {
-      "Name": "text",
-      "Address 1": "text", 
-      "Address 2": "text",
-      "City": "text",
-      "State": "text",
-      "Zip Code": "text"
+      "Size": {type: "segmented", options: ["2T", "3T", "4T"], required: true},
+      "Name": {type: "text", required: true},
+      "Address 1": {type: "text", required: true}, 
+      "Address 2": {type: "text", required: false},
+      "City": {type: "text", required: true},
+      "State": {type: "text", required: true},
+      "Zip Code": {type: "text", required: true}
   };
 
   function handleSubmit(formData) {

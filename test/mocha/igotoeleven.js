@@ -58,7 +58,7 @@ it('should put a product', async () => {
   const title = 'I Go To Eleven Toddler Tee';
   const payload = {
     timestamp: new Date().getTime() + '',
-    description: 'Lorem ipsum heyoooooo',
+    description: "If you don't get the reference, check out https://www.youtube.com/watch?v=4xgx4k83zzc.",
     price: 1800
   };
 
@@ -118,8 +118,9 @@ it('should get orders', async () => {
   const message = timestamp + savedUser.uuid;
   const signature = await sessionless.sign(message);
   
-  const res = await get(`${baseURL}user/${savedUser.uuid}/orders/40010bef-0bfd-43d2-bfbc-b48c5261104e?timestamp=${timestamp}&signature=${signature}`);
-console.log('orders::::::::', res.body);
+  const res = await get(`${baseURL}user/${savedUser.uuid}/orders/af406a6278f9429ad622c51bae5137d4ac1f6ac2018783e5abfb0c1d1ad079b4?timestamp=${timestamp}&signature=${signature}`);
+console.log('orders::::::::');
+console.log(res.body.orders.forEach(console.log));
 
   res.body.orders.length.should.not.equal(0);
 });
