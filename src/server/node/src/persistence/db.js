@@ -61,7 +61,7 @@ console.log('putting product', product);
     const uuid = user.uuid;
     product.uuid = uuid;
     product.productId = crypto.createHash('sha256').update(uuid + product.title).digest('hex');
-    await client.set(`${user.uuid}:product:${product.productId}`, JSON.stringify(product));
+    await client.set(`${user.uuid}:product:${product.title}`, JSON.stringify(product));
     
     const productsJSON = (await client.get(`products:${uuid}`)) || '{}';
     const products = JSON.parse(productsJSON);
