@@ -17,108 +17,23 @@
 
   <title>{{title}}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; height: 100vh; overflow: hidden; background: #0f0f12;">
-<div id="main-container" style="
-  width: 100vw; 
-  height: 100vh; 
-  display: flex; 
-  overflow: hidden;
-  flex-direction: row;
-">
-  <!-- Product Section -->
-  <div id="product-section" style="
-    flex: 1; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    align-items: center; 
-    padding: 20px; 
-    box-sizing: border-box;
-    min-height: 0;
-    overflow: hidden;
-  ">
-    <teleport pubKey="{{pubKey}}" signature="{{signature}}" message="{{title}}{{description}}{{amount}}" spell="sanora-club" amount="{{amount}}">
-    <div style="width: 100%; max-width: 500px; text-align: center; color: white;">
-      <img id="product-image" style="width: 100%; height: auto; max-height: 40vh; object-fit: contain; border-radius: 8px;"></img>
-      <script type="text/javascript">
-        document.getElementById('product-image').src = {{image}};
-      </script>
-      <h2 style="margin: 20px 0 10px 0; font-size: clamp(1.2rem, 4vw, 2rem);">{{title}}</h2>
-      <h4 style="margin: 10px 0; opacity: 0.8; font-weight: normal; font-size: clamp(0.9rem, 2.5vw, 1.1rem);">{{description}}</h4>
-    </div>
-    </teleport>
-  </div>
-
-  <!-- Forms Section -->
-  <div id="forms-section" style="
-    flex: 1; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    align-items: center; 
-    padding: 20px; 
-    box-sizing: border-box;
-    min-height: 0;
-    overflow: auto;
-  ">
-    <div id="address-form" style="width: 100%; max-width: 500px; margin-bottom: 20px;"></div>
-    
-    <form id="payment-form" class="payment-form" style="
-      width: 100%; 
-      max-width: 500px; 
-      background: #2a2a2e; 
-      padding: 20px; 
-      border-radius: 15px; 
-      border: 1px solid #444;
-      display: none;
-    ">
-        <div id="payment-element" style="margin-bottom: 20px;"></div>
-        <button id="submit-button" style="
-          width: 100%; 
-          padding: 15px; 
-          background: linear-gradient(90deg, green, purple); 
-          color: white; 
-          border: none; 
-          border-radius: 22.5px; 
-          font-size: 16px; 
-          font-weight: bold; 
-          cursor: pointer;
-        ">Pay now</button>
-        <div id="error-message" class="error-message" style="display: none; color: #ff6b6b; margin-top: 10px; text-align: center;"></div>
-        <div id="loading" class="loading" style="display: none; color: white; margin-top: 10px; text-align: center;">Processing payment...</div>
-    </form>
-  </div>
+<body>
+<teleport pubKey="{{pubKey}}" signature="{{signature}}" message="{{title}}{{description}}{{amount}}" spell="sanora-club" amount="{{amount}}">
+<div style="width:100%;overflow:hidden;">
+  <img id="product-image" style="width:100%;height:auto;"></img>
+  <script type="text/javascript">
+    document.getElementById('product-image').src = {{image}};
+  </script>
+  <br>
+  <h2>{{title}}</h2>
+  <br>
+  <br>
+  <h4>{{description}}</h4>
 </div>
-
-<script type="text/javascript">
-  // Responsive layout logic
-  function updateLayout() {
-    const mainContainer = document.getElementById('main-container');
-    const productSection = document.getElementById('product-section');
-    const formsSection = document.getElementById('forms-section');
-    
-    if (window.innerWidth > window.innerHeight) {
-      // Landscape: side by side
-      mainContainer.style.flexDirection = 'row';
-      productSection.style.flex = '1';
-      formsSection.style.flex = '1';
-      mainContainer.style.overflow = 'hidden';
-    } else {
-      // Portrait: vertical layout, always show 2 elements
-      mainContainer.style.flexDirection = 'column';
-      productSection.style.flex = '1';
-      formsSection.style.flex = '1';
-      mainContainer.style.overflow = 'hidden';
-    }
-  }
-
-  // Initial layout
-  updateLayout();
-  
-  // Update on resize
-  window.addEventListener('resize', updateLayout);
-</script>
-
+</teleport>
+<br>
+<div id="address-form"></div>
+<br>
 <script type="text/javascript">
   (function(window) {
     'use strict';
@@ -291,13 +206,20 @@
       console.log('Form submitted:', formData);
       // Do whatever you want with the form data
       window.formData = formData;
-      document.getElementById('payment-form').style.display = 'block';
       window.addPaymentForm();
   }
 
   const form = getForm(formConfig, handleSubmit);
   document.getElementById('address-form').appendChild(form);
 </script>
+<br>
+<form id="payment-form" class="payment-form">
+    <div id="payment-element">
+    </div>
+    <button id="submit-button">Pay now</button>
+    <div id="error-message" class="error-message" style="display: none;"></div>
+    <div id="loading" class="loading">Processing payment...</div>
+</form>
 
 <script type="text/javascript">
   let stripe;
