@@ -123,8 +123,20 @@
   (function(window) {
     'use strict';
 
-    function getBackgroundAndGradients() {
-      const svg = `<rect width="500" height="600" fill="transparent"/>
+    function calculateFormHeight(formConfig) {
+      const fieldCount = Object.keys(formConfig).filter(key => key !== 'form').length;
+      const headerHeight = 85;           
+      const fieldHeight = 70;            
+      const submitButtonHeight = 45;     
+      const bottomPadding = 30;          
+      
+      return headerHeight + (fieldCount * fieldHeight) + submitButtonHeight + bottomPadding;
+    }
+
+    function getBackgroundAndGradients(formConfig) {
+      const dynamicHeight = calculateFormHeight(formConfig);
+
+      const svg = `<rect width="500" height="${formConfig" fill="transparent"/>
       
       <!-- Form Container with Metallic Background -->
       <linearGradient id="metallicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -280,8 +292,10 @@
       
       const svg = getBackgroundAndGradients() + inputs.join('') + getSubmitButton(100, 70 * (keys.length) + 130);
 
+      const dynamicHeight = calculateFormHeight(formJSON);
+
       const container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      container.setAttribute('viewBox', `0 0 500 ${70 * keys.length + 250}`);
+      container.setAttribute('viewBox', `0 0 500 ${dynamicHeight}`);
       container.setAttribute('width', '100%');
       container.setAttribute('height', 'auto');
       container.innerHTML = svg;
