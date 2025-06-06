@@ -136,7 +136,7 @@
     function getBackgroundAndGradients(formConfig) {
       const dynamicHeight = calculateFormHeight(formConfig);
 
-      const svg = `<rect width="500" height="${dynamicHeight + 100}" fill="transparent"/>
+      const svg = `<rect width="500" height="${dynamicHeight}" fill="transparent"/>
       
       <!-- Form Container with Metallic Background -->
       <linearGradient id="metallicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -144,7 +144,7 @@
 	<stop offset="50%" stop-color="#323236"/>
 	<stop offset="100%" stop-color="#2a2a2e"/>
       </linearGradient>
-      <rect x="50" y="50" width="400" height="600" rx="15" fill="url(#metallicBackground)" 
+      <rect x="50" y="50" width="400" height="${dynamicHeight}" rx="15" fill="url(#metallicBackground)" 
 	stroke="#444" stroke-width="1"/>
       
       <!-- Subtle Metallic Highlight -->
