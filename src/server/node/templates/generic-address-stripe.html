@@ -290,7 +290,7 @@
         }
       });
       
-      const svg = getBackgroundAndGradients() + inputs.join('') + getSubmitButton(100, 70 * (keys.length) + 130);
+      const svg = getBackgroundAndGradients(formJSON) + inputs.join('') + getSubmitButton(100, 70 * (keys.length) + 130);
 
       const dynamicHeight = calculateFormHeight(formJSON);
 
