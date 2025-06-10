@@ -6,6 +6,7 @@ import db from './src/persistence/db.js';
 import generic from './src/product-pages/generic.js';
 import blog from './src/product-pages/blog.js';
 import genericAddressStripe from './src/product-pages/generic-address-stripe.js';
+import genericRecoverStripe from './src/product-pages/generic-recover-stripe.js';
 import gateway from 'magic-gateway-js';
 import addie from 'addie-js';
 import sessionless from 'sessionless-node';
@@ -321,6 +322,8 @@ console.log(newAddieUser);
     switch(req.params.type) {
       case 'blog': html = await blog.htmlForProduct(product);
       break;
+      case 'generic-recover-stripe': html = await genericRecoverStripe.htmlForProduct(product);
+      break;
       case 'generic-address-stripe': html = await genericAddressStripe.htmlForProduct(product);
       break;
       default: html = await generic.htmlForProduct(product);
@@ -541,6 +544,75 @@ app.get('/user/:uuid/orders/:productId', async (req, res) => {
     const orders = await db.getOrdersForProduct(productId);
 
     res.send({orders});
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
+app.get('/user/create-hash/:hash', async (req, res) => {
+  try {
+    const uuid = req.session.uuid;
+    const hash = req.params.hash;
+    const timestamp = new Date().getTime() + '';
+
+    const foundUser = await db.getUserByUUID(uuid);
+    const pubKey = foundUser.pubKey;
+
+    const message = timestamp + hash + pubKey;
+console.log('sanora signing', message);
+console.log('foundUser looks like: ', foundUser);
+
+    sessionless.getKeys = () => foundUser.keys;
+    
+    const signature = await sessionless.sign(message);
+    
+    sessionless.getKeys = db.getKeys;
+
+    // This needs to be dynamic, but for now we'll assume a local joan
+    const resp = await fetch(`http://127.0.0.1:3004/user/create`, {
+      method: 'PUT',
+      body: JSON.stringify({timestamp, hash, pubKey, signature}),
+      headers: {"Content-Type": "application/json"}
+    });
+    const json = await resp.json();
+console.log('create hash', json);
+    if(json && json.uuid) {
+      return res.send({success: true});
+    }
+    res.send({success: false});
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
+app.get('/user/check-hash/:hash', async (req, res) => {
+  try {
+    const uuid = req.session.uuid;
+    const hash = req.params.hash;
+    const timestamp = new Date().getTime() + '';
+
+    const foundUser = await db.getUserByUUID(uuid);
+
+    const message = timestamp + hash + foundUser.pubKey;
+
+    sessionless.getKeys = () => foundUser.keys;
+    
+    const signature = await sessionless.sign(message);
+    
+    sessionless.getKeys = db.getKeys;
+
+    // This needs to be dynamic, but for now we'll assume a local joan
+    const resp = await fetch(`http://127.0.0.1:3004/user/${hash}/pubKey/${foundUser.pubKey}?timestamp=${timestamp}&signature=${signature}`);
+    const json = await resp.json();
+console.log('check hash', json);
+    if(json && json.uuid) {
+      return res.send({success: true});
+    }
+    res.send({success: false});
   } catch(err) {
 console.warn(err);
     res.status(404);

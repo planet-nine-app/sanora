@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 should();
 import sessionless from 'sessionless-node';
-import superAgent from 'superagent';
+import superAgent from 'superAgent';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -156,6 +156,15 @@ console.log('headers:', res.headers);
   res.text.indexOf('My product').should.not.equal(-1);
 });
 
+it('should get product html for recover and stripe', async () => {
+  console.log('getting product at this url: ', `${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic-recover-stripe`);
+  const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic-recover-stripe`);
+console.log(res.text);
+console.log('headers:', res.headers);
+  savedUser['set-cookie'] = res.headers['set-cookie'];
+  res.text.indexOf('My product').should.not.equal(-1);
+});
+
 it('should put a blog', async () => {
   const title = 'My blog';
   const payload = {
@@ -240,4 +249,19 @@ console.log('orders::::::::', res.body);
 
   res.body.orders.length.should.not.equal(0);
 });
+
+it('should create a recovery hash', async () => {
+  savedUser.recoveryHash = 'foobarbaz';
+  
+  const res = await superAgent.get(`${baseURL}user/create-hash/${savedUser.recoveryHash}`)
+    .set('Cookie', savedUser['set-cookie']);
+  res.body.success.should.equal(true);
+});
+
+it('should check a recovery hash', async () => {
+  const res = await superAgent.get(`${baseURL}user/check-hash/${savedUser.recoveryHash}`)
+    .set('Cookie', savedUser['set-cookie']);
+  res.body.success.should.equal(true);
+});
+
 
