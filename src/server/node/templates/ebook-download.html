@@ -1,0 +1,346 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, minimum-scale=1.00">
+  
+  <!-- Web preview meta tags -->
+  <meta name="twitter:title" content="{{title}}">
+  <meta name="description" content="{{description}}">
+  <meta name="twitter:description" content="{{description}}">
+  <meta name="twitter:image" content="{{image}}">
+  <meta name="og:title" content="{{title}}">
+  <meta name="og:description" content="{{description}}">
+  <meta name="og:image" content="{{image}}">
+
+  <title>{{title}} - Download</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f0f12 0%, #1a1a1e 100%);
+      color: white;
+    }
+    
+    .main-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+    
+    .product-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      min-height: 0;
+    }
+    
+    .download-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      min-height: 0;
+      background: rgba(42, 42, 46, 0.3);
+      border-left: 1px solid #444;
+    }
+    
+    .product-content {
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    
+    .product-image {
+      width: 100%;
+      height: auto;
+      max-height: 40vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      margin-bottom: 20px;
+    }
+    
+    .product-title {
+      font-size: clamp(1.2rem, 4vw, 2rem);
+      font-weight: bold;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #3eda82, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .product-description {
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      opacity: 0.8;
+      font-weight: normal;
+      line-height: 1.4;
+    }
+    
+    .download-container {
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .download-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .download-title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+    
+    .download-subtitle {
+      font-size: 1rem;
+      opacity: 0.7;
+      color: #bbbbbb;
+    }
+    
+    .format-grid {
+      display: grid;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .format-button {
+      background: linear-gradient(135deg, #2a2a2e 0%, #323236 100%);
+      border: 2px solid #444;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .format-button:hover {
+      border-color: #3eda82;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(62, 218, 130, 0.2);
+    }
+    
+    .format-button:active {
+      transform: translateY(0);
+    }
+    
+    .format-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(62, 218, 130, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    .format-button:hover::before {
+      left: 100%;
+    }
+    
+    .format-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .format-name {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .format-description {
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+    
+    .download-icon {
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+    
+    .bulk-download {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #444;
+    }
+    
+    .bulk-button {
+      background: linear-gradient(90deg, #3eda82, #a855f7);
+      border: none;
+      border-radius: 12px;
+      padding: 15px 25px;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    
+    .bulk-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(62, 218, 130, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .download-section {
+        border-left: none;
+        border-top: 1px solid #444;
+      }
+      
+      .product-image {
+        max-height: 30vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Product Section -->
+    <div class="product-section">
+      <div class="product-content">
+        <img id="product-image" class="product-image" src="{{image}}" alt="{{title}}">
+        <h1 class="product-title">{{title}}</h1>
+        <p class="product-description">{{description}}</p>
+      </div>
+    </div>
+
+    <!-- Download Section -->
+    <div class="download-section">
+      <div class="download-container">
+        <div class="download-header">
+          <h2 class="download-title">Download Your Book</h2>
+          <p class="download-subtitle">Choose your preferred format</p>
+        </div>
+        
+        <div class="format-grid" id="format-grid">
+          <!-- Format buttons will be inserted here -->
+        </div>
+        
+        <div class="bulk-download">
+          <a href="#" class="bulk-button" id="bulk-download">
+            📦 Download All Formats
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration - replace with your actual file paths
+    const downloadConfig = {
+      epub: {
+        path: "/downloads/{{bookId}}/book.epub",
+        name: "EPUB",
+        description: "Best for e-readers & mobile devices",
+        icon: "📱"
+      },
+      pdf: {
+        path: "/downloads/{{bookId}}/book.pdf", 
+        name: "PDF",
+        description: "Universal format, preserves layout",
+        icon: "📄"
+      },
+      mobi: {
+        path: "/downloads/{{bookId}}/book.mobi",
+        name: "MOBI", 
+        description: "Optimized for Kindle devices",
+        icon: "📚"
+      }
+    };
+
+    function createFormatButton(format, config) {
+      const button = document.createElement('a');
+      button.className = 'format-button';
+      button.href = config.path;
+      button.download = `{{title}}.${format}`;
+      
+      button.innerHTML = `
+        <div class="format-info">
+          <div class="format-name">${config.icon} ${config.name}</div>
+          <div class="format-description">${config.description}</div>
+        </div>
+        <div class="download-icon">⬇️</div>
+      `;
+      
+      // Add download tracking
+      button.addEventListener('click', (e) => {
+        console.log(`Downloading ${format.toUpperCase()} format`);
+        // You can add analytics or tracking here
+      });
+      
+      return button;
+    }
+
+    function setupBulkDownload() {
+      const bulkButton = document.getElementById('bulk-download');
+      bulkButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Starting bulk download...');
+        
+        // Download each format with a small delay
+        Object.entries(downloadConfig).forEach(([format, config], index) => {
+          setTimeout(() => {
+            const link = document.createElement('a');
+            link.href = config.path;
+            link.download = `{{title}}.${format}`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }, index * 500); // 500ms delay between downloads
+        });
+      });
+    }
+
+    function initializeDownloads() {
+      const formatGrid = document.getElementById('format-grid');
+      
+      // Create format buttons
+      Object.entries(downloadConfig).forEach(([format, config]) => {
+        const button = createFormatButton(format, config);
+        formatGrid.appendChild(button);
+      });
+      
+      // Setup bulk download
+      setupBulkDownload();
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeDownloads);
+  </script>
+</body>
+</html>

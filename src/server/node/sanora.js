@@ -7,6 +7,7 @@ import generic from './src/product-pages/generic.js';
 import blog from './src/product-pages/blog.js';
 import genericAddressStripe from './src/product-pages/generic-address-stripe.js';
 import genericRecoverStripe from './src/product-pages/generic-recover-stripe.js';
+import ebookDownload from './src/product-pages/ebook-download.js';
 import gateway from 'magic-gateway-js';
 import addie from 'addie-js';
 import sessionless from 'sessionless-node';
@@ -324,6 +325,11 @@ console.log(newAddieUser);
       break;
       case 'generic-recover-stripe': html = await genericRecoverStripe.htmlForProduct(product);
       break;
+      case 'ebook-download.html': 
+      if(req.session.productId === product.productId) {
+        html = await ebookDownload.htmlForProduct(product);
+      }
+      break;
       case 'generic-address-stripe': html = await genericAddressStripe.htmlForProduct(product);
       break;
       default: html = await generic.htmlForProduct(product);
@@ -551,10 +557,11 @@ console.warn(err);
   }
 });
 
-app.get('/user/create-hash/:hash', async (req, res) => {
+app.get('/user/create-hash/:hash/product/:productId', async (req, res) => {
   try {
     const uuid = req.session.uuid;
     const hash = req.params.hash;
+    const productId = req.params.productId;
     const timestamp = new Date().getTime() + '';
 
     const foundUser = await db.getUserByUUID(uuid);
@@ -579,6 +586,7 @@ console.log('foundUser looks like: ', foundUser);
     const json = await resp.json();
 console.log('create hash', json);
     if(json && json.uuid) {
+      req.session.productId = productId;
       return res.send({success: true});
     }
     res.send({success: false});
@@ -589,10 +597,11 @@ console.warn(err);
   }
 });
 
-app.get('/user/check-hash/:hash', async (req, res) => {
+app.get('/user/check-hash/:hash/product/:productId', async (req, res) => {
   try {
     const uuid = req.session.uuid;
     const hash = req.params.hash;
+    const productId = req.params.productId;
     const timestamp = new Date().getTime() + '';
 
     const foundUser = await db.getUserByUUID(uuid);
@@ -610,6 +619,7 @@ app.get('/user/check-hash/:hash', async (req, res) => {
     const json = await resp.json();
 console.log('check hash', json);
     if(json && json.uuid) {
+      req.session.productId = productId;
       return res.send({success: true});
     }
     res.send({success: false});

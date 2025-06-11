@@ -34,6 +34,7 @@ const _delete = async function(path, body) {
 let savedUser = {};
 let keys = {};
 let keysToReturn = {};
+let savedProduct = {};
 
 it('should register a user', async () => {
   keys = await sessionless.generateKeys((k) => { keysToReturn = k; }, () => {return keysToReturn;});
@@ -94,6 +95,7 @@ it('should put a product', async () => {
 
   const res = await put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}`, payload);
 console.log('product meta,', res.body);
+  savedProduct = res.body;
   res.body.title.should.equal(title);
 });
 
@@ -253,13 +255,13 @@ console.log('orders::::::::', res.body);
 it('should create a recovery hash', async () => {
   savedUser.recoveryHash = 'foobarbaz';
   
-  const res = await superAgent.get(`${baseURL}user/create-hash/${savedUser.recoveryHash}`)
+  const res = await superAgent.get(`${baseURL}user/create-hash/${savedUser.recoveryHash}/product/${savedProduct.productId}`);
     .set('Cookie', savedUser['set-cookie']);
   res.body.success.should.equal(true);
 });
 
 it('should check a recovery hash', async () => {
-  const res = await superAgent.get(`${baseURL}user/check-hash/${savedUser.recoveryHash}`)
+  const res = await superAgent.get(`${baseURL}user/check-hash/${savedUser.recoveryHash}/product/${savedProduct.productId}`);
     .set('Cookie', savedUser['set-cookie']);
   res.body.success.should.equal(true);
 });
