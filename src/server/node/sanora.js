@@ -7,6 +7,7 @@ import generic from './src/product-pages/generic.js';
 import blog from './src/product-pages/blog.js';
 import genericAddressStripe from './src/product-pages/generic-address-stripe.js';
 import genericRecoverStripe from './src/product-pages/generic-recover-stripe.js';
+import genericMenuStripe from './src/product-pages/generic-menu-stripe.js';
 import ebookDownload from './src/product-pages/ebook-download.js';
 import gateway from 'magic-gateway-js';
 import addie from 'addie-js';
@@ -325,7 +326,9 @@ console.log(newAddieUser);
       break;
       case 'generic-recover-stripe': html = await genericRecoverStripe.htmlForProduct(product);
       break;
-      case 'ebook-download.html': 
+      case 'generic-menu-stripe': html = await genericMenuStripe.htmlForProduct(product);
+      break;
+      case 'ebook-download': 
       if(req.session.productId === product.productId) {
         html = await ebookDownload.htmlForProduct(product);
       }

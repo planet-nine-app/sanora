@@ -167,6 +167,45 @@ console.log('headers:', res.headers);
   res.text.indexOf('My product').should.not.equal(-1);
 });
 
+it('should put an ebook', async () => {
+  const title = 'My book';
+  const payload = {
+    timestamp: new Date().getTime() + '',
+    description: 'Lorem ipsum book time baby!',
+    price: 1000
+  };
+
+  const message = payload.timestamp + savedUser.uuid + title + payload.description + payload.price;
+  payload.signature = await sessionless.sign(message);
+
+  const res = await put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}`, payload);
+console.log('product meta,', res.body);
+  res.body.title.should.equal(title);
+});
+
+it('should put an artifact for the book', async () => {
+  const timestamp = new Date().getTime() + '';
+  const title = 'My book';
+
+  const message = timestamp + savedUser.uuid + title;
+  const signature = await sessionless.sign(message);
+
+  const res = await superAgent.put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}/artifact`)
+    .attach('artifact', join(__dirname, 'A Brief History of Teleportation.epub'))
+    .set('x-pn-timestamp', timestamp)
+    .set('x-pn-signature', signature);
+
+  res.body.success.should.equal(true);
+});
+
+it('should get book html', async () => {
+  const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My book')}/generic-recover-stripe`);
+console.log('here is the resp from blog html', res.text);
+console.log('headers:', res.headers);
+  savedUser['set-cookie'] = res.headers['set-cookie'];
+  res.text.indexOf('My book').should.not.equal(-1);
+});
+
 it('should put a blog', async () => {
   const title = 'My blog';
   const payload = {
@@ -255,13 +294,13 @@ console.log('orders::::::::', res.body);
 it('should create a recovery hash', async () => {
   savedUser.recoveryHash = 'foobarbaz';
   
-  const res = await superAgent.get(`${baseURL}user/create-hash/${savedUser.recoveryHash}/product/${savedProduct.productId}`);
+  const res = await superAgent.get(`${baseURL}user/create-hash/${savedUser.recoveryHash}/product/${savedProduct.productId}`)
     .set('Cookie', savedUser['set-cookie']);
   res.body.success.should.equal(true);
 });
 
 it('should check a recovery hash', async () => {
-  const res = await superAgent.get(`${baseURL}user/check-hash/${savedUser.recoveryHash}/product/${savedProduct.productId}`);
+  const res = await superAgent.get(`${baseURL}user/check-hash/${savedUser.recoveryHash}/product/${savedProduct.productId}`)
     .set('Cookie', savedUser['set-cookie']);
   res.body.success.should.equal(true);
 });

@@ -1,0 +1,837 @@
+<!doctype html>
+<html>
+<head>
+  <script src="https://js.stripe.com/v3/"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, minimum-scale=1.00">
+
+  <!--these are the tags that create the web preview card. You can use og:, or twitter: tags or both-->
+  <meta name="twitter:title" content="{{title}}">
+  <meta name="description" content="{{description}}">
+  <meta name="twitter:description" content="{{description}}">
+  <meta name="twitter:image" content="{{image}}">
+
+  <meta name="og:title" content="{{title}}">
+  <meta name="og:description" content="{{description}}">
+  <meta name="og:image" content="{{image}}">
+
+  <title>{{title}}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; height: 100vh; overflow: hidden; background: #0f0f12;">
+<div id="main-container" style="
+  width: 100vw; 
+  height: 100vh; 
+  display: flex; 
+  overflow: hidden;
+  flex-direction: row;
+">
+  <!-- Product Section -->
+  <div id="product-section" style="
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    padding: 20px; 
+    box-sizing: border-box;
+    min-height: 0;
+    overflow: hidden;
+  ">
+    <teleport pubKey="{{pubKey}}" signature="{{signature}}" message="{{title}}{{description}}{{amount}}" spell="sanora-club" amount="{{amount}}">
+    <div style="width: 100%; max-width: 500px; text-align: center; color: white;">
+      <img id="product-image" style="width: 100%; height: auto; max-height: 40vh; object-fit: contain; border-radius: 8px;"></img>
+      <script type="text/javascript">
+        document.getElementById('product-image').src = {{image}};
+      </script>
+      <h2 style="margin: 20px 0 10px 0; font-size: clamp(1.2rem, 4vw, 2rem);">{{title}}</h2>
+      <h4 style="margin: 10px 0; opacity: 0.8; font-weight: normal; font-size: clamp(0.9rem, 2.5vw, 1.1rem);">{{description}}</h4>
+    </div>
+    </teleport>
+  </div>
+
+  <!-- Forms Section -->
+  <div id="forms-section" style="
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    padding: 20px; 
+    box-sizing: border-box;
+    min-height: 0;
+    overflow: auto;
+  ">
+    <div id="address-form" style="width: 100%; max-width: 500px; margin-bottom: 20px;"></div>
+    
+    <form id="payment-form" class="payment-form" style="
+      width: 100%; 
+      max-width: 500px; 
+      background: #2a2a2e; 
+      padding: 20px; 
+      border-radius: 15px; 
+      border: 1px solid #444;
+      display: none;
+    ">
+        <div id="payment-element" style="margin-bottom: 20px;"></div>
+        <button id="submit-button" style="
+          width: 100%; 
+          padding: 15px; 
+          background: linear-gradient(90deg, green, purple); 
+          color: white; 
+          border: none; 
+          border-radius: 22.5px; 
+          font-size: 16px; 
+          font-weight: bold; 
+          cursor: pointer;
+        ">Pay now</button>
+        <div id="error-message" class="error-message" style="display: none; color: #ff6b6b; margin-top: 10px; text-align: center;"></div>
+        <div id="loading" class="loading" style="display: none; color: white; margin-top: 10px; text-align: center;">Processing payment...</div>
+    </form>
+  </div>
+</div>
+
+<script type="text/javascript">
+  // Responsive layout logic
+  function updateLayout() {
+    const mainContainer = document.getElementById('main-container');
+    const productSection = document.getElementById('product-section');
+    const formsSection = document.getElementById('forms-section');
+    
+    if (window.innerWidth > window.innerHeight) {
+      // Landscape: side by side
+      mainContainer.style.flexDirection = 'row';
+      productSection.style.flex = '1';
+      formsSection.style.flex = '1';
+      mainContainer.style.overflow = 'hidden';
+    } else {
+      // Portrait: vertical layout, always show 2 elements
+      mainContainer.style.flexDirection = 'column';
+      productSection.style.flex = '1';
+      formsSection.style.flex = '1';
+      mainContainer.style.overflow = 'hidden';
+    }
+  }
+
+  // Initial layout
+  updateLayout();
+  
+  // Update on resize
+  window.addEventListener('resize', updateLayout);
+</script>
+
+<script type="text/javascript">
+  (function(window) {
+    'use strict';
+
+    function calculateTextBlockHeight(text, width = 340, fontSize = 14, lineHeight = 1.4) {
+      const temp = document.createElement('div');
+      temp.style.position = 'absolute';
+      temp.style.visibility = 'hidden';
+      temp.style.width = `${width}px`;
+      temp.style.fontSize = `${fontSize}px`;
+      temp.style.lineHeight = `${lineHeight}`;
+      temp.style.fontFamily = 'Arial, sans-serif';
+      temp.style.padding = '12px';
+      temp.innerHTML = text;
+      
+      document.body.appendChild(temp);
+      const height = temp.offsetHeight;
+      document.body.removeChild(temp);
+      
+      return height;
+    };
+
+    function calculateFormHeight(formConfig) {
+      const fields = Object.keys(formConfig).filter(key => key !== 'form');
+      const headerHeight = 85;           
+      const standardFieldHeight = 70;
+      const submitButtonHeight = 45;     
+      const bottomPadding = 30;
+      
+      let totalHeight = headerHeight;
+      
+      fields.forEach(key => {
+        const fieldConfig = formConfig[key];
+        
+        if (fieldConfig.type === 'text-block') {
+          const textHeight = calculateTextBlockHeight(fieldConfig.content || fieldConfig.text);
+          totalHeight += textHeight + 20;
+        } else if (fieldConfig.type === 'menu') {
+          // Calculate height for menu items
+          const menuHeight = fieldConfig.items ? fieldConfig.items.length * 80 + 40 : 80; // 80px per item + header
+          totalHeight += menuHeight;
+        } else {
+          totalHeight += standardFieldHeight;
+        }
+      });
+      
+      return totalHeight + submitButtonHeight + bottomPadding;
+    }
+
+    function getBackgroundAndGradients(formConfig) {
+      const dynamicHeight = calculateFormHeight(formConfig);
+
+      const svg = `<rect width="500" height="${dynamicHeight}" fill="transparent"/>
+      
+      <!-- Form Container with Metallic Background -->
+      <linearGradient id="metallicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#2a2a2e"/>
+        <stop offset="50%" stop-color="#323236"/>
+        <stop offset="100%" stop-color="#2a2a2e"/>
+      </linearGradient>
+      <rect x="50" y="50" width="400" height="${dynamicHeight}" rx="15" fill="url(#metallicBackground)" 
+        stroke="#444" stroke-width="1"/>
+      
+      <!-- Subtle Metallic Highlight -->
+      <line x1="51" y1="52" x2="449" y2="52" stroke="#555" stroke-width="1" opacity="0.5"/>
+      
+      <!-- Form Header -->
+      <text x="250" y="85" font-family="Arial, sans-serif" font-size="24" font-weight="bold" 
+        fill="#ffffff" text-anchor="middle">ORDER MENU</text>
+      
+      <!-- Define the gradient for active input borders -->
+      <linearGradient id="inputGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="purple"/>
+        <stop offset="100%" stop-color="green"/>
+      </linearGradient>
+      
+      <!-- Button Gradient -->
+      <linearGradient id="buttonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop id="submitButtonGradientStart" offset="0%" stop-color="green"/>
+        <stop id="submitButtonGradientEnd" offset="100%" stop-color="purple"/>
+      </linearGradient>
+
+      <linearGradient id="buttonPressedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="purple"/>
+        <stop offset="100%" stop-color="green"/>
+      </linearGradient>
+      
+      <!-- Plus/Minus Button Gradients -->
+      <linearGradient id="plusButtonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#4ade80"/>
+        <stop offset="100%" stop-color="#22c55e"/>
+      </linearGradient>
+      
+      <linearGradient id="minusButtonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#f87171"/>
+        <stop offset="100%" stop-color="#ef4444"/>
+      </linearGradient>`;
+
+      return svg;
+    }
+
+    function getMenuItem(x, y, menuConfig) {
+      const menuId = `${menuConfig.title.replace(/\s+/g, '')}Menu`;
+      const items = menuConfig.items || [];
+      
+      let menuSvg = `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff">${menuConfig.title}</text>`;
+      
+      let currentItemY = y + 30;
+      
+      items.forEach((item, index) => {
+        const itemId = `${menuId}_${item.productId}`;
+        const price = (item.price / 100).toFixed(2); // Convert cents to dollars
+        
+        // Menu item container
+        menuSvg += `
+          <!-- Menu Item Container -->
+          <rect id="${itemId}_container" x="${x}" y="${currentItemY}" width="340" height="70" rx="8" 
+                fill="#1c1c20" stroke="#444" stroke-width="2" class="menu-item"/>
+          
+          <!-- Item Image (if exists) -->
+          ${item.image ? `<rect x="${x + 10}" y="${currentItemY + 10}" width="50" height="50" rx="4" fill="#333"/>
+          <foreignObject x="${x + 10}" y="${currentItemY + 10}" width="50" height="50">
+            <img xmlns="http://www.w3.org/1999/xhtml" src="/images/${item.image}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;" alt="${item.title}"/>
+          </foreignObject>` : ''}
+          
+          <!-- Item Details -->
+          <text x="${x + (item.image ? 75 : 15)}" y="${currentItemY + 20}" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">${item.title}</text>
+          <text x="${x + (item.image ? 75 : 15)}" y="${currentItemY + 38}" font-family="Arial, sans-serif" font-size="12" fill="#bbbbbb">${item.description}</text>
+          <text x="${x + (item.image ? 75 : 15)}" y="${currentItemY + 55}" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#3eda82">$${price}</text>
+          
+          <!-- Minus Button -->
+          <rect id="${itemId}_minus" x="${x + 250}" y="${currentItemY + 20}" width="30" height="30" rx="4" 
+                fill="#444" stroke="#666" stroke-width="1" style="cursor: pointer;" class="quantity-button"/>
+          <text x="${x + 265}" y="${currentItemY + 38}" font-family="Arial, sans-serif" font-size="18" font-weight="bold" 
+                fill="#bbbbbb" text-anchor="middle" style="pointer-events: none;">−</text>
+          
+          <!-- Quantity Display -->
+          <rect id="${itemId}_quantity_bg" x="${x + 285}" y="${currentItemY + 20}" width="30" height="30" rx="4" 
+                fill="#2a2a2e" stroke="#444" stroke-width="1"/>
+          <text id="${itemId}_quantity" x="${x + 300}" y="${currentItemY + 38}" font-family="Arial, sans-serif" font-size="14" font-weight="bold" 
+                fill="#ffffff" text-anchor="middle">0</text>
+          
+          <!-- Plus Button -->
+          <rect id="${itemId}_plus" x="${x + 320}" y="${currentItemY + 20}" width="30" height="30" rx="4" 
+                fill="#444" stroke="#666" stroke-width="1" style="cursor: pointer;" class="quantity-button"/>
+          <text x="${x + 335}" y="${currentItemY + 38}" font-family="Arial, sans-serif" font-size="18" font-weight="bold" 
+                fill="#bbbbbb" text-anchor="middle" style="pointer-events: none;">+</text>
+        `;
+        
+        currentItemY += 80;
+      });
+      
+      // Add total section
+      menuSvg += `
+        <!-- Total Section -->
+        <rect id="${menuId}_total_bg" x="${x}" y="${currentItemY + 10}" width="340" height="40" rx="8" 
+              fill="#2a2a2e" stroke="url(#inputGradient)" stroke-width="2"/>
+        <text x="${x + 15}" y="${currentItemY + 33}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff">Total:</text>
+        <text id="${menuId}_total" x="${x + 325}" y="${currentItemY + 33}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" 
+              fill="#3eda82" text-anchor="end">$0.00</text>
+        
+        <!-- Hidden input to store menu data -->
+        <foreignObject x="${x}" y="${currentItemY + 55}" width="1" height="1" style="overflow: hidden;">
+          <input xmlns="http://www.w3.org/1999/xhtml" id="${menuId}" type="hidden" data-field="${menuConfig.title}"/>
+        </foreignObject>
+      `;
+      
+      const menuHeight = items.length * 80 + 100; // 80px per item + header + total
+      return { svg: menuSvg, height: menuHeight };
+    }
+
+    function getSegmentedSelector(x, y, text, options) {
+      const borderId = `${text.replace(/\s+/g, '')}Border`;
+      const selectorId = `${text.replace(/\s+/g, '')}Selector`;
+      
+      const segmentWidth = 340 / options.length;
+      
+      let segments = '';
+      let segmentTexts = '';
+      
+      options.forEach((option, index) => {
+        const segmentX = x + (index * segmentWidth);
+        const segmentId = `${selectorId}_${index}`;
+        
+        segments += `<rect id="${segmentId}" x="${segmentX}" y="${y + 10}" width="${segmentWidth}" height="40" rx="${index === 0 ? '8 0 0 8' : index === options.length - 1 ? '0 8 8 0' : '0'}" fill="#1c1c20" stroke="#444" stroke-width="1" style="cursor: pointer;" data-option="${option}" data-selected="false"/>`;
+        
+        segmentTexts += `<text x="${segmentX + segmentWidth/2}" y="${y + 33}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb" text-anchor="middle" style="pointer-events: none;">${option}</text>`;
+      });
+
+      const svg = `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+        <!-- Segmented Container -->
+        <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="40" rx="8" fill="transparent" stroke="#444" stroke-width="2"/>
+        ${segments}
+        ${segmentTexts}
+        <!-- Hidden input to store value -->
+        <foreignObject x="${x}" y="${y + 55}" width="1" height="1" style="overflow: hidden;">
+          <input xmlns="http://www.w3.org/1999/xhtml" id="${selectorId}" type="hidden" data-field="${text}"/>
+        </foreignObject>`;
+
+      return svg;
+    }
+
+    function getInput(x, y, text, inputType) {
+      const borderId = `${text.replace(/\s+/g, '')}Border`;
+      const inputId = `${text.replace(/\s+/g, '')}Input`;
+
+      const svg = `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+        <!-- Field Background -->
+        <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="40" rx="8" fill="#1c1c20" 
+              stroke="#444" stroke-width="2" class="input-field"/>
+        <!-- Inset shadow effect -->
+        <rect x="${x + 2}" y="${y + 12}" width="336" height="36" rx="6" fill="none" 
+              stroke="#000" stroke-width="1" opacity="0.3"/>
+        <!-- HTML Input Field -->
+        <foreignObject x="${x + 5}" y="${y + 15}" width="330" height="30">
+          <input xmlns="http://www.w3.org/1999/xhtml" id="${inputId}" type="text" placeholder="Enter ${text.toLowerCase()}" data-field="${text}" spellcheck="false" style="width:100%; height: 100%; background-color: transparent; color: white; border: none; outline: none; padding: 8px 12px; font-size: 14px; font-family: Arial, sans-serif; border-radius: 6px;"/>
+        </foreignObject>`;
+
+      return svg;
+    }
+
+    function getTextBlock(x, y, text, content) {
+      const textHeight = calculateTextBlockHeight(content);
+      
+      const svg = `<!-- Text Block Background -->
+        <rect x="${x}" y="${y + 10}" width="340" height="${textHeight}" rx="8" 
+              fill="#1a1a1e" stroke="#333" stroke-width="1"/>
+        
+        <!-- Text Block Content -->
+        <foreignObject x="${x + 12}" y="${y + 22}" width="316" height="${textHeight - 24}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="
+            font-family: Arial, sans-serif; 
+            font-size: 14px; 
+            line-height: 1.4; 
+            color: #cccccc; 
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          ">${content}</div>
+        </foreignObject>`;
+
+      return { svg, height: textHeight + 20 };
+    };
+
+    function getSubmitButton(x, y) {
+      return `<rect id="submitButton" x="${x}" y="${y}" width="300" height="45" rx="22.5" fill="#666666" style="cursor: not-allowed;">
+          </rect>
+          <text x="${x + 150}" y="${y + 28}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#999999" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
+      `;
+    }
+
+    function enableSubmitButton() {
+      const submitButton = document.getElementById('submitButton');
+      const submitButtonText = submitButton.nextElementSibling;
+      
+      submitButton.setAttribute('fill', 'url(#buttonGradient)');
+      submitButton.setAttribute('style', 'cursor: pointer;');
+      submitButtonText.setAttribute('fill', 'white');
+    }
+
+    function disableSubmitButton() {
+      const submitButton = document.getElementById('submitButton');
+      const submitButtonText = submitButton.nextElementSibling;
+      
+      submitButton.setAttribute('fill', '#666666');
+      submitButton.setAttribute('style', 'cursor: not-allowed;');
+      submitButtonText.setAttribute('fill', '#999999');
+    }
+
+    function validateForm(formJSON) {
+      const requiredFields = Object.keys(formJSON).filter(key => 
+        key !== 'form' && formJSON[key].required
+      );
+      
+      const allValid = requiredFields.every(key => {
+        const fieldConfig = formJSON[key];
+        
+        if (fieldConfig.type === 'segmented') {
+          const selectorId = `${key.replace(/\s+/g, '')}Selector`;
+          const selector = document.getElementById(selectorId);
+          return selector && selector.value && selector.value.trim() !== '';
+        } else if (fieldConfig.type === 'menu') {
+          const menuId = `${key.replace(/\s+/g, '')}Menu`;
+          const menu = document.getElementById(menuId);
+          if (!menu) return false;
+          const menuData = JSON.parse(menu.value || '{}');
+          return Object.keys(menuData).length > 0;
+        } else {
+          const inputId = `${key.replace(/\s+/g, '')}Input`;
+          const input = document.getElementById(inputId);
+          return input && input.value && input.value.trim() !== '';
+        }
+      });
+      
+      if (allValid) {
+        enableSubmitButton();
+      } else {
+        disableSubmitButton();
+      }
+      
+      return allValid;
+    }
+
+    function updateMenuTotal(menuConfig, menuId) {
+      const menu = document.getElementById(menuId);
+      if (!menu) return;
+      
+      const menuData = JSON.parse(menu.value || '{}');
+      let total = 0;
+      
+      Object.entries(menuData).forEach(([productId, quantity]) => {
+        const item = menuConfig.items.find(i => i.productId === productId);
+        if (item && quantity > 0) {
+          total += item.price * quantity;
+        }
+      });
+      
+      const totalElement = document.getElementById(`${menuId}_total`);
+      if (totalElement) {
+        totalElement.textContent = `$${(total / 100).toFixed(2)}`;
+      }
+    }
+
+    function updateMenuItemBorder(itemId, quantity) {
+      const container = document.getElementById(`${itemId}_container`);
+      if (container) {
+        if (quantity > 0) {
+          container.setAttribute('stroke', 'url(#inputGradient)');
+        } else {
+          container.setAttribute('stroke', '#444');
+        }
+      }
+    }
+
+    function getForm(formJSON, onSubmit) {
+      const keys = Object.keys(formJSON);
+      let currentY = 130;
+      const inputs = [];
+      
+      keys.forEach((key) => {
+        if (key === "form") return;
+        
+        const fieldConfig = formJSON[key];
+        if (fieldConfig.type === 'text-block') {
+          const textBlock = getTextBlock(80, currentY, key, fieldConfig.content || fieldConfig.text);
+          inputs.push(textBlock.svg);
+          currentY += textBlock.height;
+        } else if (fieldConfig.type === 'segmented') {
+          inputs.push(getSegmentedSelector(80, currentY, key, fieldConfig.options));
+          currentY += 70;
+        } else if (fieldConfig.type === 'menu') {
+          const menuItem = getMenuItem(80, currentY, fieldConfig);
+          inputs.push(menuItem.svg);
+          currentY += menuItem.height;
+        } else {
+          inputs.push(getInput(80, currentY, key, fieldConfig.type));
+          currentY += 70;
+        }
+      });
+      
+      inputs.push(getSubmitButton(100, currentY + 20));
+      
+      const svg = getBackgroundAndGradients(formJSON) + inputs.join('');
+      const dynamicHeight = calculateFormHeight(formJSON);
+
+      const container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      container.setAttribute('viewBox', `0 0 500 ${dynamicHeight + 100}`);
+      container.setAttribute('width', '100%');
+      container.setAttribute('height', 'auto');
+      container.innerHTML = svg;
+
+      setTimeout(() => {
+        Object.keys(formJSON).forEach((key) => {
+          if(key === 'form') return;
+
+          const fieldConfig = formJSON[key];
+          
+          if (fieldConfig.type === 'menu') {
+            const menuId = `${key.replace(/\s+/g, '')}Menu`;
+            const menu = document.getElementById(menuId);
+            
+            if (menu) {
+              menu.value = JSON.stringify({});
+              
+              fieldConfig.items.forEach((item) => {
+                const itemId = `${menuId}_${item.productId}`;
+                const plusButton = document.getElementById(`${itemId}_plus`);
+                const minusButton = document.getElementById(`${itemId}_minus`);
+                const quantityDisplay = document.getElementById(`${itemId}_quantity`);
+                
+                if (plusButton && minusButton && quantityDisplay) {
+                  plusButton.addEventListener('click', () => {
+                    const menuData = JSON.parse(menu.value || '{}');
+                    const currentQuantity = menuData[item.productId] || 0;
+                    const newQuantity = currentQuantity + 1;
+                    
+                    menuData[item.productId] = newQuantity;
+                    menu.value = JSON.stringify(menuData);
+                    quantityDisplay.textContent = newQuantity.toString();
+                    
+                    // Update button colors
+                    plusButton.setAttribute('fill', 'url(#plusButtonGradient)');
+                    if (newQuantity > 0) {
+                      minusButton.setAttribute('fill', 'url(#minusButtonGradient)');
+                    }
+                    
+                    updateMenuItemBorder(itemId, newQuantity);
+                    updateMenuTotal(fieldConfig, menuId);
+                    validateForm(formJSON);
+                  });
+                  
+                  minusButton.addEventListener('click', () => {
+                    const menuData = JSON.parse(menu.value || '{}');
+                    const currentQuantity = menuData[item.productId] || 0;
+                    
+                    if (currentQuantity > 0) {
+                      const newQuantity = currentQuantity - 1;
+                      
+                      if (newQuantity === 0) {
+                        delete menuData[item.productId];
+                        minusButton.setAttribute('fill', '#444');
+                      } else {
+                        menuData[item.productId] = newQuantity;
+                      }
+                      
+                      menu.value = JSON.stringify(menuData);
+                      quantityDisplay.textContent = newQuantity.toString();
+                      
+                      updateMenuItemBorder(itemId, newQuantity);
+                      updateMenuTotal(fieldConfig, menuId);
+                      validateForm(formJSON);
+                    }
+                  });
+                }
+              });
+            }
+          } else if (fieldConfig.type === 'segmented') {
+            // Existing segmented selector logic
+            const selectorId = `${key.replace(/\s+/g, '')}Selector`;
+            const selector = document.getElementById(selectorId);
+            const borderId = `${key.replace(/\s+/g, '')}Border`;
+            
+            fieldConfig.options.forEach((option, optionIndex) => {
+              const segmentId = `${selectorId}_${optionIndex}`;
+              const segment = document.getElementById(segmentId);
+              
+              if (segment) {
+                segment.addEventListener('click', () => {
+                  fieldConfig.options.forEach((_, clearIndex) => {
+                    const clearSegmentId = `${selectorId}_${clearIndex}`;
+                    const clearSegment = document.getElementById(clearSegmentId);
+                    if (clearSegment) {
+                      clearSegment.setAttribute('fill', '#1c1c20');
+                      clearSegment.setAttribute('data-selected', 'false');
+                    }
+                  });
+                  
+                  segment.setAttribute('fill', '#3eda82');
+                  segment.setAttribute('data-selected', 'true');
+                  
+                  if (selector) {
+                    selector.value = option;
+                  }
+                  
+                  const borderElement = document.getElementById(borderId);
+                  if (borderElement) {
+                    borderElement.setAttribute('stroke', 'url(#inputGradient)');
+                  }
+                  
+                  validateForm(formJSON);
+                });
+              }
+            });
+          } else {
+            // Existing input logic
+            const inputId = `${key.replace(/\s+/g, '')}Input`;
+            const inputElement = document.getElementById(inputId);
+            const borderId = `${key.replace(/\s+/g, '')}Border`;
+            
+            if (inputElement) {
+              inputElement.addEventListener('input', () => {
+                const borderElement = document.getElementById(borderId);
+                if (borderElement) {
+                  borderElement.setAttribute('stroke', 'url(#inputGradient)');
+                }
+                
+                validateForm(formJSON);
+              });
+            }
+          }
+        });
+
+        const submitButton = document.getElementById('submitButton');
+        if (submitButton) {
+          submitButton.addEventListener('click', () => {
+            if (!validateForm(formJSON)) {
+              console.log('Form validation failed');
+              return;
+            }
+            
+            console.log('Submit button clicked');
+            
+            // Button animation code (existing)
+            const animation = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+            animation.setAttribute("attributeName", "offset");
+            animation.setAttribute("values", "-0.5;2.5");
+            animation.setAttribute("dur", "300ms");
+            animation.setAttribute("repeatCount", "1");
+
+            const secondAnimation = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+            secondAnimation.setAttribute("attributeName", "offset");
+            secondAnimation.setAttribute("values", "0.5;3.5");
+            secondAnimation.setAttribute("dur", "300ms");
+            secondAnimation.setAttribute("repeatCount", "1");
+
+            const startGradient = document.getElementById('submitButtonGradientStart');
+            const endGradient = document.getElementById('submitButtonGradientEnd');
+            
+            if (startGradient && endGradient) {
+              startGradient.appendChild(animation);
+              endGradient.appendChild(secondAnimation);
+              animation.beginElement();
+              secondAnimation.beginElement();
+            }
+
+            // Collect form values
+            const formValues = {};
+            Object.keys(formJSON).forEach((key) => {
+              if(key === 'form') return;
+
+              const fieldConfig = formJSON[key];
+              
+              if (fieldConfig.type === 'segmented') {
+                const selectorId = `${key.replace(/\s+/g, '')}Selector`;
+                const selector = document.getElementById(selectorId);
+                if (selector) {
+                  formValues[key] = selector.value;
+                }
+              } else if (fieldConfig.type === 'menu') {
+                const menuId = `${key.replace(/\s+/g, '')}Menu`;
+                const menu = document.getElementById(menuId);
+                if (menu) {
+                  formValues[key] = JSON.parse(menu.value || '{}');
+                }
+              } else {
+                const inputId = `${key.replace(/\s+/g, '')}Input`;
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                  formValues[key] = inputElement.value;
+                }
+              }
+            });
+
+            if (onSubmit) {
+              onSubmit(formValues);
+            }
+          });
+        }
+        
+        validateForm(formJSON);
+      }, 100);
+
+      return container;
+    }
+
+    window.getForm = getForm;
+
+  })(window);
+</script>
+
+<script>
+  const formConfig = {
+    "Menu": {
+      type: "menu",
+      title: "Order Menu",
+      required: true,
+      items: [
+	{
+	  productId: "552629711c9b0b23dba69a1bafe2874680d4394636d2df5b187eb372708134f1",
+	  title: "My product",
+	  description: "Lorem ipsum heyoooooo",
+	  price: 1000, // in cents
+	  image: "e2794323-4083-469e-8732-e01e95ec9611" // optional
+	},
+	{
+	  productId: "c7f0a9dce881c3dfb2e0b1c5d55dadd2ee149835060a361fc3140ba72b853b76",
+	  title: "My blog",
+	  description: "Lorem ipsum blog time baby!",
+	  price: 1000,
+	  // no image for this item
+	}
+      ]
+    }
+  };
+
+
+  function handleSubmit(formData) {
+      console.log('Form submitted:', formData);
+      // Do whatever you want with the form data
+      window.formData = formData;
+      document.getElementById('payment-form').style.display = 'block';
+//      window.addPaymentForm();
+  }
+
+  const form = getForm(formConfig, handleSubmit);
+  document.getElementById('address-form').appendChild(form);
+</script>
+
+<script type="text/javascript">
+  let stripe;
+  let elements;
+  let response;
+
+  const paymentForm = document.getElementById('payment-form');
+  const submitButton = document.getElementById('submit-button');
+  const errorMessage = document.getElementById('error-message');
+  const loadingMessage = document.getElementById('loading');
+
+  async function getPaymentIntentWithoutSplits(amount, currency) {
+    try {
+      const payload = {
+	timestamp: new Date().getTime() + '',
+	amount: {{amount}}, 
+	currency: 'USD',
+	payees: [] 
+      };
+
+      const res = await fetch(`https://${window.location.host}/processor/stripe/intent`, {
+        method: 'put',
+        body: JSON.stringify(payload),
+        headers: {'Content-Type': 'application/json'}
+      });
+
+      const response = await res.json();
+console.log('got intent response', response);
+
+      stripe = Stripe(response.publishableKey);
+      elements = stripe.elements({
+        clientSecret: response.paymentIntent
+      });
+
+      const paymentElement = elements.create('payment');
+      paymentElement.mount('#payment-element');
+    } catch(err) {
+  console.warn(err);
+    }    
+  };
+
+  window.confirmPayment = async () => {
+    const order = {
+      title: "{{title}}",
+      productId: "{{productId}}",
+      formData
+    };
+    await fetch('/user/orders', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({timestamp: new Date().getTime() + '', order})
+    });
+    const redirect = 'what should this be?';
+    try {
+      const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+              return_url: redirect,
+          },
+      });
+
+      if(error) {
+        showError(error.message);
+      }
+    } catch(err) {
+      showError('An unexpected error occurred.');
+console.warn('payment error: ', err);
+    }
+  };
+
+  paymentForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    // Disable payment form submission while processing
+    setLoading(true);
+
+    await window.confirmPayment();
+
+    setLoading(false);
+  });
+
+  const showError = (message) => {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+    setTimeout(() => {
+      errorMessage.style.display = 'none';
+      errorMessage.textContent = '';
+    }, 5000);
+  };
+
+  const setLoading = (isLoading) => {
+    submitButton.disabled = isLoading;
+    loadingMessage.style.display = isLoading ? 'block' : 'none';
+  };
+
+  const start = () => {
+    getPaymentIntentWithoutSplits({{amount}}, 'USD');
+  };
+
+  window.addPaymentForm = start;
+</script>
+</body>
+</html>
