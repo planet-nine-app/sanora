@@ -244,9 +244,11 @@ app.put('/user/:uuid/product/:title/artifact', async (req, res) => {
 
       const artifact = req.files.artifact;
       const artifactUUID = sessionless.generateUUID();
-      await artifact.mv('./artifacts/' + artifactUUID);
+      const extension = path.extname(artifact.name);
+      const artifactName = artifactUUID + extension;
+      await artifact.mv('./artifacts/' + artifactName);
 
-      product.artifacts.push(artifactUUID);
+      product.artifacts.push(artifactName);
 
       db.putProduct(foundUser, product);
 

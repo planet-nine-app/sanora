@@ -263,19 +263,19 @@
     // Configuration - replace with your actual file paths
     const downloadConfig = {
       epub: {
-        path: "/downloads/{{bookId}}/book.epub",
+        path: "{{epubPath}}",
         name: "EPUB",
         description: "Best for e-readers & mobile devices",
         icon: "📱"
       },
       pdf: {
-        path: "/downloads/{{bookId}}/book.pdf", 
+        path: "{{pdfPath}}", 
         name: "PDF",
         description: "Universal format, preserves layout",
         icon: "📄"
       },
       mobi: {
-        path: "/downloads/{{bookId}}/book.mobi",
+        path: "{{mobiPath}}",
         name: "MOBI", 
         description: "Optimized for Kindle devices",
         icon: "📚"
