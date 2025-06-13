@@ -13,7 +13,7 @@ const genericAddressStripeHTML = fs.readFileSync(join(__dirname, '../..', 'templ
 await sessionless.generateKeys(() => {}, db.getKeys);
 
 const genericAddressStripe = {
-  htmlForProduct: async (product) => {
+  htmlForProduct: async (host, product) => {
     const keys = await db.getKeys();
     const message = product.title + product.description + product.amount;
     const signature = await sessionless.sign(message);
@@ -22,7 +22,7 @@ const genericAddressStripe = {
     productHTML = productHTML.replace(/{{title}}/g, product.title)
       .replace(/{{productId}}/g, product.productId)
       .replace(/{{description}}/g, product.description)
-      .replace(/{{image}}/g, "`https://${window.location.host}/images/" + `${product.image}` + "`")
+      .replace(/{{image}}/g, `"https://${host}/images/${product.image}"`)
       .replace(/{{amount}}/g, product.price)
       .replace(/{{pubKey}}/g, keys.pubKey)
       .replace(/{{signature}}/g, signature);

@@ -183,6 +183,21 @@ console.log('product meta,', res.body);
   res.body.title.should.equal(title);
 });
 
+it('should put an image for the ebook', async () => {
+  const timestamp = new Date().getTime() + '';
+  const title = 'My book';
+
+  const message = timestamp + savedUser.uuid + title;
+  const signature = await sessionless.sign(message);
+
+  const res = await superAgent.put(`${baseURL}user/${savedUser.uuid}/product/${encodeURIComponent(title)}/image`)
+    .attach('image', join(__dirname, 'image.png'))
+    .set('x-pn-timestamp', timestamp)
+    .set('x-pn-signature', signature);
+
+  res.body.success.should.equal(true);
+});
+
 it('should put an artifact for the book', async () => {
   const timestamp = new Date().getTime() + '';
   const title = 'My book';

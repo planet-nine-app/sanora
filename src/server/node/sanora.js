@@ -295,6 +295,7 @@ app.use(session({
 
 app.get('/products/:uuid/:title/:type', async (req, res) => {
    try {
+    const host = req.get('host');
     if(!req.session.uuid) {
       req.session.regenerate((err) => {
 console.warn(err);
@@ -326,13 +327,13 @@ console.log(newAddieUser);
     switch(req.params.type) {
       case 'blog': html = await blog.htmlForProduct(product);
       break;
-      case 'generic-recover-stripe': html = await genericRecoverStripe.htmlForProduct(product);
+      case 'generic-recover-stripe': html = await genericRecoverStripe.htmlForProduct(host, product);
       break;
       case 'generic-menu-stripe': html = await genericMenuStripe.htmlForProduct(product);
       break;
       case 'ebook-download': 
       if(req.session.productId === product.productId) {
-        html = await ebookDownload.htmlForProduct(product);
+        html = await ebookDownload.htmlForProduct(host, product);
       }
       break;
       case 'generic-address-stripe': html = await genericAddressStripe.htmlForProduct(product);
@@ -633,6 +634,17 @@ console.warn(err);
     res.status(404);
     res.send({error: 'not found'});
   }
+});
+
+app.get('/images/:uuid', (req, res) => {
+  const uuid = req.params.uuid;
+  const imagePath = path.join(__dirname, 'images', uuid);
+
+  if(!fs.existsSync(imagePath)) {
+    return res.status(404).send('Not found');
+  }
+
+  res.sendFile(imagePath);
 });
 
 app.listen(process.env.PORT || 7243);

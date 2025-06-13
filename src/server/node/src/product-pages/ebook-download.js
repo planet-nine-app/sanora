@@ -13,7 +13,7 @@ const ebookDownloadHTML = fs.readFileSync(join(__dirname, '../..', 'templates', 
 await sessionless.generateKeys(() => {}, db.getKeys);
 
 const ebookDownload = {
-  htmlForProduct: async (product) => {
+  htmlForProduct: async (host, product) => {
     const keys = await db.getKeys();
     const message = product.title + product.description + product.amount;
     const signature = await sessionless.sign(message);
@@ -36,7 +36,7 @@ const ebookDownload = {
     productHTML = productHTML.replace(/{{title}}/g, product.title)
       .replace(/{{productId}}/g, product.productId)
       .replace(/{{description}}/g, product.description)
-      .replace(/{{image}}/g, "`https://${window.location.host}/images/" + `${product.image}` + "`")
+      .replace(/{{image}}/g, `"https://${host}/images/${product.image}"`)
       .replace(/{{amount}}/g, product.price)
       .replace(/{{epubPath}}/g, epubPath)
       .replace(/{{pdfPath}}/g, pdfPath)
