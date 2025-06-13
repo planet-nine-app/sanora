@@ -647,5 +647,19 @@ app.get('/images/:uuid', (req, res) => {
   res.sendFile(imagePath);
 });
 
+app.get('/artifacts/:uuid', (req, res) => {
+  const uuid = req.params.uuid;
+  const artifactPath = path.join(__dirname, 'articats', uuid);
+
+  if(!fs.existsSync(imagePath)) {
+    return res.status(404).send('Not found');
+  }
+
+  res.sendFile(artifactPath);
+}); 
+
+
+
+
 app.listen(process.env.PORT || 7243);
 console.log('Join the club');

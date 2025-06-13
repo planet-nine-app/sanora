@@ -606,7 +606,12 @@ console.log('got intent response', response);
     const json = await resp.json();
 
     if(json.success) {
-      window.location.href = window.location.href.split('/').pop().push('ebook-download').join('/');        
+      const currentLocation = window.location.href.split('/');
+      currentLocation.pop();
+console.log('currentLoc', currentLocation);
+      currentLocation.push('ebook-download');
+      const newLocation = currentLocation.join('/');        
+      window.location.href = newLocation;
       return;
     }
     const redirect = 'what should this be?';
