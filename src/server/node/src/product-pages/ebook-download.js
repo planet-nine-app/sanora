@@ -17,9 +17,9 @@ const ebookDownload = {
     const keys = await db.getKeys();
     const message = product.title + product.description + product.amount;
     const signature = await sessionless.sign(message);
-    let epubPath = './artifacts/';
-    let pdfPath = './artifacts/';
-    let mobiPath = './artifacts/';
+    let epubPath = '/artifacts/';
+    let pdfPath = '/artifacts/';
+    let mobiPath = '/artifacts/';
     product.artifacts.forEach(artifact => {
       if(artifact.indexOf('epub') !== -1) {
         epubPath += artifact;
