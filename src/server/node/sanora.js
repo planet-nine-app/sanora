@@ -638,7 +638,7 @@ console.warn(err);
 
 app.get('/images/:uuid', (req, res) => {
   const uuid = req.params.uuid;
-  const imagePath = path.join(__dirname, 'images', uuid);
+  const imagePath = path.join(process.cwd(), 'images', uuid);
 
   if(!fs.existsSync(imagePath)) {
     return res.status(404).send('Not found');
@@ -649,7 +649,7 @@ app.get('/images/:uuid', (req, res) => {
 
 app.get('/artifacts/:uuid', (req, res) => {
   const uuid = req.params.uuid;
-  const artifactPath = path.join(__dirname, 'artifacts', uuid);
+  const artifactPath = path.join(process.cwd(), 'artifacts', uuid);
 
   if(!fs.existsSync(imagePath)) {
     return res.status(404).send('Not found');
