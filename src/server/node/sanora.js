@@ -651,7 +651,7 @@ app.get('/artifacts/:uuid', (req, res) => {
   const uuid = req.params.uuid;
   const artifactPath = path.join(process.cwd(), 'artifacts', uuid);
 
-  if(!fs.existsSync(imagePath)) {
+  if(!fs.existsSync(artifactPath)) {
     return res.status(404).send('Not found');
   }
   
