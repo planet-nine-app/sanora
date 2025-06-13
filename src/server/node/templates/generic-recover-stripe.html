@@ -533,8 +533,8 @@
         const currentLocation = window.location.href.split('/');
         currentLocation.pop();
 console.log('currentLoc', currentLocation);
-        const newLocation = currentLocation.push('ebook-download');
-        const joinedLocation = newLocation.join('/');        
+        currentLocation.push('ebook-download');
+        const newLocation = currentLocation.join('/');        
         window.location.href = newLocation;
         return;
       }
