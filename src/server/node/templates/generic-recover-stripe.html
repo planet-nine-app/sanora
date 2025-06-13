@@ -530,9 +530,11 @@
       const json = await resp.json();
 
       if(json.success) {
-        const currentLocation = window.location.href.split('/')
-        currentLocation.pop()
-        const newLocation = currentLocation.push('ebook-download').join('/');        
+        const currentLocation = window.location.href.split('/');
+        currentLocation.pop();
+console.log('currentLoc', currentLocation);
+        const newLocation = currentLocation.push('ebook-download');
+        const joinedLocation = newLocation.join('/');        
         window.location.href = newLocation;
         return;
       }
