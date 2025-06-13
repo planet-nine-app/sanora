@@ -654,6 +654,9 @@ app.get('/artifacts/:uuid', (req, res) => {
   if(!fs.existsSync(imagePath)) {
     return res.status(404).send('Not found');
   }
+  
+  const stats = fs.statSync(artifactPath);
+  console.log('File size:', stats.size, 'bytes');
 
   res.sendFile(artifactPath);
 }); 
