@@ -24,6 +24,7 @@ const genericAddressStripe = {
       .replace(/{{description}}/g, product.description)
       .replace(/{{image}}/g, `"https://${host}/images/${product.image}"`)
       .replace(/{{amount}}/g, product.price)
+      .replace(/{{formattedAmount}}/g, (product.price / 100))
       .replace(/{{pubKey}}/g, keys.pubKey)
       .replace(/{{signature}}/g, signature);
 
