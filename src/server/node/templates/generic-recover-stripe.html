@@ -605,12 +605,12 @@ console.log('got intent response', response);
       formData
     };
 
-    const redirect = 'what should this be?';
     try {
       const { error } = await stripe.confirmPayment({
           elements,
           confirmParams: {
-              return_url: redirect,
+              return_url: http://wiki.planetnineisaspaceship.com,
+              redirect: 'if_required'
           },
       });
 
