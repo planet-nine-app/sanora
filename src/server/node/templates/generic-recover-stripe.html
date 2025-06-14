@@ -604,26 +604,7 @@ console.log('got intent response', response);
       productId: "{{productId}}",
       formData
     };
-    await fetch('/user/orders', {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({timestamp: new Date().getTime() + '', order})
-    });
-    const recoveryHash = formData.Recovery + "{{productId}}";
-    const createHashURL = `/user/create-hash/${recoveryHash}/product/{{productId}}`
 
-    const resp = await fetch(createHashURL);
-    const json = await resp.json();
-
-    if(json.success) {
-      const currentLocation = window.location.href.split('/');
-      currentLocation.pop();
-console.log('currentLoc', currentLocation);
-      currentLocation.push('ebook-download');
-      const newLocation = currentLocation.join('/');        
-      window.location.href = newLocation;
-      return;
-    }
     const redirect = 'what should this be?';
     try {
       const { error } = await stripe.confirmPayment({
@@ -634,8 +615,32 @@ console.log('currentLoc', currentLocation);
       });
 
       if(error) {
-        showError(error.message);
+        return showError(error.message);
       }
+
+      await fetch('/user/orders', {
+	method: 'PUT',
+	headers: {'Content-Type': 'application/json'},
+	body: JSON.stringify({timestamp: new Date().getTime() + '', order})
+      });
+      const recoveryHash = formData.Recovery + "{{productId}}";
+      const createHashURL = `/user/create-hash/${recoveryHash}/product/{{productId}}`
+
+      const resp = await fetch(createHashURL);
+      const json = await resp.json();
+
+      if(json.success) {
+	const currentLocation = window.location.href.split('/');
+	currentLocation.pop();
+  console.log('currentLoc', currentLocation);
+	currentLocation.push('ebook-download');
+	const newLocation = currentLocation.join('/');        
+	window.location.href = newLocation;
+	return;
+      }
+
+      window.alert('Your payment was successful, but there was an error creating this recovery hash. Please contact greetings@planetnine.app for support.');
+
     } catch(err) {
       showError('An unexpected error occurred.');
 console.warn('payment error: ', err);
