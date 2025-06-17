@@ -17,162 +17,116 @@
 
   <title>{{title}}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background: #0f0f12; color: white;">
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; height: 100vh; overflow: hidden; background: #0f0f12;">
 <div id="main-container" style="
-  min-height: 100vh; 
+  width: 100vw; 
+  height: 100vh; 
   display: flex; 
-  flex-direction: column;
+  overflow: hidden;
+  flex-direction: row;
 ">
   <!-- Product Section -->
   <div id="product-section" style="
+    flex: 1; 
     display: flex; 
     flex-direction: column; 
     justify-content: center; 
     align-items: center; 
-    padding: 40px 20px; 
+    padding: 20px; 
     box-sizing: border-box;
-    min-height: 100vh;
+    min-height: 0;
+    overflow: hidden;
   ">
     <teleport pubKey="{{pubKey}}" signature="{{signature}}" message="{{title}}{{description}}{{amount}}" spell="sanora-club" amount="{{amount}}">
-    <div style="width: 100%; max-width: 600px; text-align: center;">
-      <img id="product-image" style="width: 100%; height: auto; max-height: 50vh; object-fit: contain; border-radius: 12px; margin-bottom: 30px;"></img>
+    <div style="width: 100%; max-width: 500px; text-align: center; color: white;">
+      <img id="product-image" style="width: 100%; height: auto; max-height: 40vh; object-fit: contain; border-radius: 8px;"></img>
       <script type="text/javascript">
         document.getElementById('product-image').src = {{image}};
       </script>
-      <h1 style="margin: 0 0 20px 0; font-size: clamp(1.8rem, 5vw, 3rem); font-weight: bold;">{{title}}</h1>
-      <p style="margin: 0 0 40px 0; opacity: 0.9; font-size: clamp(1rem, 3vw, 1.3rem); line-height: 1.5;">{{description}}</p>
-      
-      <!-- Big Buy Button -->
-      <button id="buy-button" style="
-        width: 100%; 
-        max-width: 400px;
-        padding: 20px 40px; 
-        background: linear-gradient(135deg, #8b5cf6, #10b981); 
-        color: white; 
-        border: none; 
-        border-radius: 50px; 
-        font-size: clamp(1.2rem, 4vw, 1.5rem); 
-        font-weight: bold; 
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
-      " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(139, 92, 246, 0.4)';" 
-         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(139, 92, 246, 0.3)';">
-        BUY NOW - ${{formattedAmount}}
-      </button>
+      <h2 style="margin: 20px 0 10px 0; font-size: clamp(1.2rem, 4vw, 2rem);">{{title}}</h2>
+      <h4 style="margin: 10px 0; opacity: 0.8; font-weight: normal; font-size: clamp(0.9rem, 2.5vw, 1.1rem);">{{description}}</h4>
     </div>
     </teleport>
   </div>
 
   <!-- Forms Section -->
   <div id="forms-section" style="
-    display: none;
-    padding: 40px 20px; 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    padding: 20px; 
     box-sizing: border-box;
-    background: rgba(20, 20, 24, 0.8);
-    backdrop-filter: blur(10px);
+    min-height: 0;
+    overflow: auto;
   ">
-    <div style="max-width: 1200px; margin: 0 auto;">
-      <h2 style="text-align: center; margin-bottom: 40px; font-size: clamp(1.5rem, 4vw, 2rem);">Complete Your Purchase</h2>
-      
-      <div id="forms-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start;">
-        <!-- Recovery Form -->
-        <div>
-          <h3 style="margin-bottom: 20px; color: #a855f7;">Recovery Information</h3>
-          <div id="address-form"></div>
-        </div>
-        
-        <!-- Payment Form -->
-        <div>
-          <h3 style="margin-bottom: 20px; color: #10b981;">Payment Details</h3>
-          <form id="payment-form" class="payment-form" style="
-            background: #2a2a2e; 
-            padding: 30px; 
-            border-radius: 15px; 
-            border: 1px solid #444;
-          ">
-            <div style="
-              text-align: center; 
-              margin-bottom: 20px; 
-              padding: 15px; 
-              background: rgba(255,255,255,0.05); 
-              border-radius: 8px;
-            ">
-              <div style="color: #bbbbbb; font-size: 14px; margin-bottom: 5px;">Total</div>
-              <div style="color: #3eda82; font-size: 24px; font-weight: bold;">${{formattedAmount}}</div>
-            </div>
-            <div id="payment-element" style="margin-bottom: 20px;"></div>
-            <button id="submit-button" style="
-              width: 100%; 
-              padding: 15px; 
-              background: #666666; 
-              color: #999999; 
-              border: none; 
-              border-radius: 22.5px; 
-              font-size: 16px; 
-              font-weight: bold; 
-              cursor: not-allowed;
-            " disabled>Complete Purchase</button>
-            <div id="error-message" class="error-message" style="display: none; color: #ff6b6b; margin-top: 10px; text-align: center;"></div>
-            <div id="loading" class="loading" style="display: none; color: white; margin-top: 10px; text-align: center;">Processing payment...</div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <div id="address-form" style="width: 100%; max-width: 500px; margin-bottom: 20px;"></div>
+    
+    <form id="payment-form" class="payment-form" style="
+      width: 100%; 
+      max-width: 500px; 
+      background: #2a2a2e; 
+      padding: 20px; 
+      border-radius: 15px; 
+      border: 1px solid #444;
+      display: none;
+    ">
+        <div style="
+	  text-align: center; 
+	  margin-bottom: 20px; 
+	  padding: 15px; 
+	  background: rgba(255,255,255,0.05); 
+	  border-radius: 8px;
+	">
+	  <div style="color: #bbbbbb; font-size: 14px; margin-bottom: 5px;">Total</div>
+	  <div style="color: #3eda82; font-size: 24px; font-weight: bold;">${{formattedAmount}}</div>
+	</div>
+        <div id="payment-element" style="margin-bottom: 20px;"></div>
+        <button id="submit-button" style="
+          width: 100%; 
+          padding: 15px; 
+          background: linear-gradient(90deg, green, purple); 
+          color: white; 
+          border: none; 
+          border-radius: 22.5px; 
+          font-size: 16px; 
+          font-weight: bold; 
+          cursor: pointer;
+        ">Pay now</button>
+        <div id="error-message" class="error-message" style="display: none; color: #ff6b6b; margin-top: 10px; text-align: center;"></div>
+        <div id="loading" class="loading" style="display: none; color: white; margin-top: 10px; text-align: center;">Processing payment...</div>
+    </form>
   </div>
 </div>
 
-<style>
-@media (max-width: 768px) {
-  #forms-grid {
-    grid-template-columns: 1fr !important;
-    gap: 30px !important;
-  }
-  
-  #product-section {
-    min-height: 80vh !important;
-    padding: 20px !important;
-  }
-}
-</style>
-
 <script type="text/javascript">
-  // Buy button functionality
-  document.getElementById('buy-button').addEventListener('click', function() {
+  // Responsive layout logic
+  function updateLayout() {
+    const mainContainer = document.getElementById('main-container');
+    const productSection = document.getElementById('product-section');
     const formsSection = document.getElementById('forms-section');
-    formsSection.style.display = 'block';
     
-    // Smooth scroll to forms section
-    formsSection.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
-    });
-    
-    // Initialize payment form
-    window.addPaymentForm();
-  });
-  
-  // Form validation for both forms
-  function validateAllForms() {
-    const recoveryValid = validateForm(formConfig);
-    const paymentValid = stripe && elements; // Basic check that payment is initialized
-    
-    const submitButton = document.getElementById('submit-button');
-    
-    if (recoveryValid && paymentValid) {
-      submitButton.style.background = 'linear-gradient(90deg, #10b981, #8b5cf6)';
-      submitButton.style.color = 'white';
-      submitButton.style.cursor = 'pointer';
-      submitButton.disabled = false;
-      submitButton.textContent = 'Complete Purchase';
+    if (window.innerWidth > window.innerHeight) {
+      // Landscape: side by side
+      mainContainer.style.flexDirection = 'row';
+      productSection.style.flex = '1';
+      formsSection.style.flex = '1';
+      mainContainer.style.overflow = 'hidden';
     } else {
-      submitButton.style.background = '#666666';
-      submitButton.style.color = '#999999';
-      submitButton.style.cursor = 'not-allowed';
-      submitButton.disabled = true;
-      submitButton.textContent = 'Complete Purchase';
+      // Portrait: vertical layout, always show 2 elements
+      mainContainer.style.flexDirection = 'column';
+      productSection.style.flex = '1';
+      formsSection.style.flex = '1';
+      mainContainer.style.overflow = 'hidden';
     }
   }
+
+  // Initial layout
+  updateLayout();
+  
+  // Update on resize
+  window.addEventListener('resize', updateLayout);
 </script>
 
 <script type="text/javascript">
@@ -389,9 +343,6 @@
         disableSubmitButton();
       }
       
-      // Also trigger overall validation
-      setTimeout(() => validateAllForms(), 100);
-      
       return allValid;
     }
 
@@ -599,9 +550,8 @@ console.log('currentLoc', currentLocation);
       }
 
       window.formData = formData;
-      // Don't show payment form here anymore, it's already visible
-      // Just trigger validation
-      validateAllForms();
+      document.getElementById('payment-form').style.display = 'block';
+      window.addPaymentForm();
   }
 
   const form = getForm(formConfig, handleSubmit);
@@ -643,15 +593,6 @@ console.log('got intent response', response);
 
       const paymentElement = elements.create('payment');
       paymentElement.mount('#payment-element');
-      
-      // Trigger validation when payment element is ready
-      paymentElement.on('ready', () => {
-        setTimeout(() => validateAllForms(), 500);
-      });
-      
-      paymentElement.on('change', () => {
-        setTimeout(() => validateAllForms(), 100);
-      });
     } catch(err) {
   console.warn(err);
     }    
@@ -743,5 +684,3 @@ console.warn('payment error: ', err);
 </script>
 </body>
 </html>
-
-
