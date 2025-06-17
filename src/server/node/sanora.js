@@ -481,8 +481,10 @@ app.put('/user/:uuid/orders', async (req, res) => {
     }
 
     // TODO: There needs to be some step here that verifies that payment has settled
+    // TODO: Needs to have a permission nineum for being able to update orders
+    const orderUser = await db.getUserByUUID(order.userUUID);
 
-    await db.putOrder(foundUser, order);
+    await db.updateOrder(orderUser, order);
 
     res.send(foundUser);
   } catch(err) {
@@ -525,6 +527,7 @@ console.log('intent session uuid is: ', req.session.uuid);
     }
 
     // TODO: There needs to be some step here that verifies that payment has settled
+    order.userUUID = uuid;
 
     await db.putOrder(foundUser, order);
 

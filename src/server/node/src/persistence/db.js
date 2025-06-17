@@ -85,7 +85,39 @@ console.log('putting product', product);
     return JSON.parse(product);
   },
 
+  updateOrder: async (user, order) => {
+    const userOrdersKey = `user:${user.uuid}:orders`;
+    const ordersKey = `order:${order.productId}:orders`;
+
+    const userOrdersJSON = (await client.get(userOrdersKey)) || '[]';
+    const ordersJSON = (await client.get(ordersKey)) || '[]';
+
+    const userOrders = JSON.parse(userOrdersJSON);
+    const orders = JSON.parse(ordersJSON);
+
+    mappedUserOrders = userOrders.map($ => {
+      if($.orderId === order.orderId) {
+        return order;
+      }
+      return $;
+    });
+
+    mappedOrders = orders.map($ => {
+      if($.orderId === order.orderId) {
+        return order;
+      }
+      return $;
+    });
+
+    await client.set(userOrdersKey, JSON.stringify(mappedUserOrders));
+    await client.set(ordersKey, JSON.stringify(mappedOrders));
+
+    return true;
+  },
+
   putOrder: async (user, order) => {
+    order.orderId = sessionless.generateUUID();
+
     const userOrdersKey = `user:${user.uuid}:orders`;
     const ordersKey = `order:${order.productId}:orders`;
 
