@@ -95,14 +95,14 @@ console.log('putting product', product);
     const userOrders = JSON.parse(userOrdersJSON);
     const orders = JSON.parse(ordersJSON);
 
-    mappedUserOrders = userOrders.map($ => {
+    const mappedUserOrders = userOrders.map($ => {
       if($.orderId === order.orderId) {
         return order;
       }
       return $;
     });
 
-    mappedOrders = orders.map($ => {
+    const mappedOrders = orders.map($ => {
       if($.orderId === order.orderId) {
         return order;
       }
