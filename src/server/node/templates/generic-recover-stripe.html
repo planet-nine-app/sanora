@@ -395,6 +395,8 @@
       return allValid;
     }
 
+    window.validateForm = validateForm;
+
     function getForm(formJSON, onSubmit) {
       const keys = Object.keys(formJSON);
       let currentY = 130; // Initialize currentY
