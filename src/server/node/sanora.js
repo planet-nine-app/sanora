@@ -336,7 +336,7 @@ console.log(newAddieUser);
         html = await ebookDownload.htmlForProduct(host, product);
       }
       break;
-      case 'generic-address-stripe': html = await genericAddressStripe.htmlForProduct(product);
+      case 'generic-address-stripe': html = await genericAddressStripe.htmlForProduct(host, product);
       break;
       default: html = await generic.htmlForProduct(product);
       break;
