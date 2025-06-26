@@ -15,7 +15,7 @@ await sessionless.generateKeys(() => {}, db.getKeys);
 const genericAddressStripe = {
   htmlForProduct: async (host, product) => {
     const keys = await db.getKeys();
-    const message = product.title + product.description + product.amount;
+    const message = product.title + product.amount;
     const signature = await sessionless.sign(message);
 
     let productHTML = `${genericAddressStripeHTML}`;
