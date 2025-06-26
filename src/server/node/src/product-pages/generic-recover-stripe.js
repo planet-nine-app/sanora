@@ -8,17 +8,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const baseURL = process.env.baseURL || 'http://127.0.0.1:7243/';
-//const genericAddressStripeHTML = fs.readFileSync(path.resolve('.', 'templates/generic.html'));
-const genericAddressStripeHTML = fs.readFileSync(join(__dirname, '../..', 'templates', 'generic-recover-stripe.html'));
+//const genericRecoverStripeHTML = fs.readFileSync(path.resolve('.', 'templates/generic.html'));
+const genericRecoverStripeHTML = fs.readFileSync(join(__dirname, '../..', 'templates', 'generic-recover-stripe.html'));
 await sessionless.generateKeys(() => {}, db.getKeys);
 
-const genericAddressStripe = {
+const genericRecoverStripe = {
   htmlForProduct: async (host, product) => {
     const keys = await db.getKeys();
-    const message = product.title + product.amount;
+    await sessionless.generateKeys(() => {}, db.getKeys);
+    const message = product.title + product.price;
     const signature = await sessionless.sign(message);
 
-    let productHTML = `${genericAddressStripeHTML}`;
+    let productHTML = `${genericRecoverStripeHTML}`;
     productHTML = productHTML.replace(/{{title}}/g, product.title)
       .replace(/{{productId}}/g, product.productId)
       .replace(/{{description}}/g, product.description)
@@ -32,4 +33,4 @@ const genericAddressStripe = {
   }
 };
 
-export default genericAddressStripe;
+export default genericRecoverStripe;
