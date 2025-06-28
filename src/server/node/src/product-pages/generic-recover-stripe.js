@@ -16,6 +16,7 @@ const genericRecoverStripe = {
   htmlForProduct: async (host, product) => {
     const keys = await db.getKeys();
     await sessionless.generateKeys(() => {}, db.getKeys);
+    sessionless.getKeys = db.getKeys;
     const message = product.title + product.price;
     const signature = await sessionless.sign(message);
 
