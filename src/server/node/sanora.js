@@ -664,8 +664,25 @@ app.get('/artifacts/:uuid', (req, res) => {
   res.sendFile(artifactPath);
 }); 
 
+// Serve form widget JavaScript
+app.get('/form-widget.js', (req, res) => {
+  const widgetCode = fs.readFileSync(path.join(process.cwd(), 'sanora/public/form-widget.js'), 'utf8');
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send(widgetCode);
+});
 
+// Serve form widget CSS
+app.get('/form-widget.css', (req, res) => {
+  const widgetCSS = fs.readFileSync(path.join(process.cwd(), 'sanora/public/form-widget.css'), 'utf8');
+  res.setHeader('Content-Type', 'text/css');
+  res.send(widgetCSS);
+});
 
+app.get('/form-demo.html', (req, res) => {
+  const demoHTML = fs.readFileSync(path.join(process.cwd(), 'sanora/public/form-demo.html'), 'utf8');
+  res.setHeader('Content-Type', 'text/css');
+  res.send(demoHTML);
+});
 
 app.listen(process.env.PORT || 7243);
 console.log('Join the club');
