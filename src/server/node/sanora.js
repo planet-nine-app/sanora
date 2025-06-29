@@ -680,8 +680,18 @@ app.get('/form-widget.css', (req, res) => {
 
 app.get('/form-demo.html', (req, res) => {
   const demoHTML = fs.readFileSync(path.join(process.cwd(), 'sanora/public/form-demo.html'), 'utf8');
-  res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(demoHTML);
+});
+
+app.get('/peaceloveandredistribution', (req, res) => {
+  const htmlPath = path.join(process.cwd(), 'peaceloveandredistribution.html');
+       console.log('htmlPath is ', htmlPath);
+  if(!fs.existsSync(htmlPath)) {
+    return res.status(404).send('Not found');
+  }
+ 
+  res.sendFile(htmlPath);
 });
 
 app.listen(process.env.PORT || 7243);
