@@ -684,6 +684,12 @@ app.get('/form-demo.html', (req, res) => {
   res.send(demoHTML);
 });
 
+app.get('/form-docs.html', (req, res) => {
+  const docsHTML = fs.readFileSync(path.join(process.cwd(), 'sanora/public/form-docs.html'), 'utf8');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(docsHTML);
+});
+
 app.get('/peaceloveandredistribution', (req, res) => {
   const htmlPath = path.join(process.cwd(), 'peaceloveandredistribution.html');
        console.log('htmlPath is ', htmlPath);

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Widget Documentation</title>
+    <link rel="stylesheet" href="https://livetest.sanora.allyabase.com/form-widget.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 40px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #8b5cf6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .docs-section {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .docs-section h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .field-type {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .field-type h3 {
+            color: #8b5cf6;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .field-type code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #10b981;
+        }
+
+        .field-features {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .editor-section {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .editor-section h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .config-editor {
+            background: #1a1a2e;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #e4e4e4;
+            width: 100%;
+            height: 400px;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+
+        .config-editor:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #8b5cf6, #10b981);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e4e4e4;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .preview-section {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .preview-section h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .form-preview {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            min-height: 200px;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .buttons {
+                justify-content: center;
+            }
+        }
+
+        /* Syntax highlighting for JSON */
+        .json-string { color: #98d982; }
+        .json-number { color: #ffab70; }
+        .json-boolean { color: #ff8a80; }
+        .json-null { color: #ff8a80; }
+        .json-key { color: #82aaff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Form Widget Documentation</h1>
+            <p>Interactive SVG-based forms with dynamic field types</p>
+        </div>
+
+        <div class="main-content">
+            <div class="docs-section">
+                <h2>📝 Available Field Types</h2>
+                
+                <div class="field-type">
+                    <h3>Text Input</h3>
+                    <code>type: "text"</code>
+                    <div class="field-features">
+                        Standard input fields with animated borders. Supports all HTML input types (email, tel, url, password, etc.)
+                    </div>
+                </div>
+
+                <div class="field-type">
+                    <h3>Textarea</h3>
+                    <code>type: "textarea"</code>
+                    <div class="field-features">
+                        Multi-line text input with character counting. Set <code>charLimit</code> property (default: 500)
+                    </div>
+                </div>
+
+                <div class="field-type">
+                    <h3>Image Upload</h3>
+                    <code>type: "image"</code>
+                    <div class="field-features">
+                        Drag & drop file upload with preview. Supports JPG, PNG, GIF up to 5MB
+                    </div>
+                </div>
+
+                <div class="field-type">
+                    <h3>DateTime</h3>
+                    <code>type: "datetime"</code>
+                    <div class="field-features">
+                        Advanced date/time picker with start/end times, smart defaults, and multiple event support
+                    </div>
+                </div>
+
+                <div class="field-type">
+                    <h3>Text Block</h3>
+                    <code>type: "text-block"</code>
+                    <div class="field-features">
+                        Display-only content. Use <code>content</code> or <code>text</code> property for the content
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <h2>⚡ Try It Out</h2>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="generateForm()">Generate Form</button>
+                    <button class="btn btn-secondary" onclick="loadExample('basic')">Basic Example</button>
+                    <button class="btn btn-secondary" onclick="loadExample('advanced')">Advanced Example</button>
+                    <button class="btn btn-secondary" onclick="loadExample('complete')">Complete Example</button>
+                </div>
+
+                <textarea class="config-editor" id="configEditor" placeholder="Enter your formConfig JSON here...">
+{
+  "Full Name": {
+    "type": "text"
+  },
+  "Email": {
+    "type": "email"
+  },
+  "Message": {
+    "type": "textarea",
+    "charLimit": 300
+  }
+}</textarea>
+
+                <div id="errorContainer"></div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <h2>🎨 Live Preview</h2>
+            <div class="form-preview" id="formPreview">
+                <p style="opacity: 0.6; font-style: italic;">Click "Generate Form" to see your form here</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://livetest.sanora.allyabase.com/form-widget.js"></script>
+    <script>
+        const examples = {
+            basic: {
+                "Full Name": {
+                    "type": "text"
+                },
+                "Email": {
+                    "type": "email"
+                },
+                "Message": {
+                    "type": "textarea",
+                    "charLimit": 300
+                }
+            },
+            advanced: {
+                "Instructions": {
+                    "type": "text-block",
+                    "content": "Please fill out all fields accurately. Your information will be kept confidential."
+                },
+                "First Name": {
+                    "type": "text"
+                },
+                "Last Name": {
+                    "type": "text"
+                },
+                "Email Address": {
+                    "type": "email"
+                },
+                "Phone Number": {
+                    "type": "tel"
+                },
+                "Profile Photo": {
+                    "type": "image"
+                },
+                "Additional Comments": {
+                    "type": "textarea",
+                    "charLimit": 500
+                }
+            },
+            complete: {
+                "Welcome Message": {
+                    "type": "text-block",
+                    "content": "Welcome to our event registration form! Please provide your details and availability."
+                },
+                "Full Name": {
+                    "type": "text"
+                },
+                "Email Address": {
+                    "type": "email"
+                },
+                "Phone": {
+                    "type": "tel"
+                },
+                "Website": {
+                    "type": "url"
+                },
+                "Profile Picture": {
+                    "type": "image"
+                },
+                "Event Availability": {
+                    "type": "datetime"
+                },
+                "Bio": {
+                    "type": "textarea",
+                    "charLimit": 800
+                },
+                "Additional Notes": {
+                    "type": "textarea",
+                    "charLimit": 200
+                },
+                "Terms": {
+                    "type": "text-block",
+                    "content": "By submitting this form, you agree to our terms of service and privacy policy."
+                }
+            }
+        };
+
+        function loadExample(type) {
+            const config = examples[type];
+            document.getElementById('configEditor').value = JSON.stringify(config, null, 2);
+            clearError();
+        }
+
+        function generateForm() {
+            const editor = document.getElementById('configEditor');
+            const preview = document.getElementById('formPreview');
+            
+            try {
+                clearError();
+                const config = JSON.parse(editor.value);
+                
+                if (typeof config !== 'object' || config === null) {
+                    throw new Error('Configuration must be an object');
+                }
+
+                if (Object.keys(config).length === 0) {
+                    throw new Error('Configuration cannot be empty');
+                }
+
+                // Clear previous form
+                preview.innerHTML = '';
+                
+                // Generate new form
+                const formElement = window.getForm(config, handleFormSubmit);
+                preview.appendChild(formElement);
+                
+            } catch (error) {
+                showError('JSON Parse Error: ' + error.message);
+                preview.innerHTML = '<p style="opacity: 0.6; font-style: italic; color: #ef4444;">Error generating form - check your JSON syntax</p>';
+            }
+        }
+
+        function handleFormSubmit(formData) {
+            console.log('Form submitted:', formData);
+            console.log('Images:', window.formImageData);
+            console.log('Date/times:', window.dateTimes);
+            
+            alert('Form submitted! Check the browser console for data details.');
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+
+        function clearError() {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = '';
+        }
+
+        // Load basic example on page load
+        window.addEventListener('load', () => {
+            loadExample('basic');
+            generateForm();
+        });
+
+        // Auto-generate on Enter key in editor
+        document.getElementById('configEditor').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                generateForm();
+            }
+        });
+    </script>
+</body>
+</html>
