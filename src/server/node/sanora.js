@@ -684,8 +684,8 @@ app.get('/form-demo.html', (req, res) => {
   res.send(demoHTML);
 });
 
-app.get('/form-docs.html', (req, res) => {
-  const docsHTML = fs.readFileSync(path.join(process.cwd(), 'sanora/public/form-docs.html'), 'utf8');
+app.get('/form-widget-docs.html', (req, res) => {
+  const docsHTML = fs.readFileSync(path.join(process.cwd(), 'sanora/public/form-widget-docs.html'), 'utf8');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(docsHTML);
 });
