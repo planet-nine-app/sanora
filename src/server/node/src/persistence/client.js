@@ -39,6 +39,17 @@ const get = async (key) => {
   }
 };
 
+const getAll = async (pattern) => {
+  const files = await fs.readdirSync(basePath, {recursive: true})
+  .filter(file => file.indexOf(pattern) > -1)
+  .map(file => ({
+    filename: file,
+    content: fs.readFileSync(file, 'utf8')
+  }));
+
+  return files;
+};
+
 const del = async (key) => {
   const filePath = await filePathForKey(key);
 

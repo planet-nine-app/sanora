@@ -77,6 +77,12 @@ console.log('putting product', product);
     return products;
   },
 
+  getProductsForBase: async () => {
+    const files = (await client.getAll('products')) || '[]';
+    const products = files.map(file => JSON.parse(file.content));
+    return products;
+  },
+
   getProduct: async (uuid, title) => {
     const product = await client.get(`${uuid}:product:${title}`);
     if(!product) {

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teleport Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f0f12;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .title {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: bold;
+            background: linear-gradient(135deg, #8b5cf6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 2px;
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .centered-image {
+            max-width: 90%;
+            max-height: 60vh;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .centered-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .title {
+                margin-bottom: 30px;
+                letter-spacing: 1px;
+            }
+            
+            .centered-image {
+                max-width: 95%;
+                max-height: 50vh;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .teleport-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* Single column when height > width (portrait orientation) */
+        @media (orientation: portrait) {
+            .teleport-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .teleport-item {
+            background: rgba(20, 20, 24, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid #333;
+            transition: transform 0.3s ease;
+        }
+
+        .teleport-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.7;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #ff6b6b;
+        }
+
+        /* Override button hover styles from teleport content */
+        .teleport-item button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4) !important;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">Peace, Love, and Redistribution</h1>
+    
+    <div class="image-container">
+        <!--img src="https://via.placeholder.com/600x400/667eea/white?text=Your+Image+Here" 
+             alt="Peace, Love, and Redistribution" 
+             class="centered-image"-->
+    </div>
+
+    <div class="container">
+        <div class="teleport-grid" id="teleportGrid">
+            <!-- Teleport items will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        class TeleportViewer {
+            constructor() {
+                this.grid = document.getElementById('teleportGrid');
+                this.init();
+            }
+
+            async init() {
+                // Show loading state
+                this.showLoading();
+                
+                // Find all elements with teleportURL attribute
+                const teleportElements = document.querySelectorAll('[teleportURL]');
+                
+                if (teleportElements.length === 0) {
+                    // For demo purposes, create a sample element
+                    this.createSampleTeleportElement();
+                } else {
+                    // Process existing teleport elements
+                    for (const element of teleportElements) {
+                        await this.loadTeleportContent(element);
+                    }
+                }
+            }
+
+            showLoading() {
+                this.grid.innerHTML = '<div class="loading">Loading teleport content...</div>';
+            }
+
+            showError(message) {
+                this.grid.innerHTML = `<div class="error">Error: ${message}</div>`;
+            }
+
+            createSampleTeleportElement() {
+                // Create a sample div with teleportURL for demonstration
+                const sampleDiv = document.createElement('div');
+                sampleDiv.setAttribute('teleportURL', 'https://peaceloveandredistribution.com/a-brief-history-of-teleportation');
+                document.body.appendChild(sampleDiv);
+                this.loadTeleportContent(sampleDiv);
+            }
+
+            async loadTeleportContent(element) {
+                const teleportURL = element.getAttribute('teleportURL');
+                if (!teleportURL) return;
+
+                try {
+                    // You'll need to replace these with actual user credentials
+                    const uuid = 'your-uuid-here';
+                    const timestamp = Date.now();
+                    const hash = 'your-hash-here';
+                    const signature = 'your-signature-here';
+
+                    const params = new URLSearchParams({
+                        timestamp,
+                        hash,
+                        signature,
+                        url: teleportURL
+                    });
+
+                    const response = await fetch(`/user/${uuid}/teleport?${params}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const teleportData = await response.json();
+                    teleportData.teleportedFrom = teleportURL;
+
+                    if (teleportData.valid) {
+                        this.renderTeleportItem(teleportData);
+                    } else {
+                        this.showError('Invalid teleport data');
+                    }
+
+                } catch (error) {
+                    console.error('Failed to load teleport content:', error);
+                    // For demo purposes, show sample content when API fails
+                    this.renderSampleContent();
+                }
+            }
+
+            renderTeleportItem(teleportData) {
+                // Clear loading state if this is the first item
+                if (this.grid.querySelector('.loading')) {
+                    this.grid.innerHTML = '';
+                }
+
+                const teleportItem = document.createElement('div');
+                teleportItem.className = 'teleport-item';
+                
+                // Insert the HTML content from the teleport data
+                teleportItem.innerHTML = teleportData.html;
+
+                // Add event listeners for any buttons or interactive elements
+                this.addInteractivity(teleportItem, teleportData);
+
+                this.grid.appendChild(teleportItem);
+            }
+
+            renderSampleContent() {
+                // Clear loading state
+                this.grid.innerHTML = '';
+
+                // Render the sample content from your provided object
+                const sampleData = {
+                    valid: true,
+                    html: `
+                        <div style="width: 100%; max-width: 600px; text-align: center;">
+                            <img id="product-image" style="width: 100%; height: auto; max-height: 50vh; object-fit: contain; border-radius: 12px; margin-bottom: 30px;" src="https://peaceloveandredistribution.com/images/d0c65c77-1cfb-4629-b89d-01296161b014">
+                            <h1 style="margin: 0 0 20px 0; font-size: clamp(1.8rem, 5vw, 3rem); font-weight: bold;">A Brief History of Teleportation</h1>
+                            <p style="margin: 0 0 40px 0; opacity: 0.9; font-size: clamp(1rem, 3vw, 1.3rem); line-height: 1.5;">Written around the year 2250 after the first teleportation of a living being, A Brief History of Teleportation tells the story of how humanity went from terrestrially focused, to understanding more its place amongst the stars. Following the traditional of science chronicles like, well, all the other books that start with "A Brief History of...", A Brief History of Teleportation is a tour through: "Physics, Biochemistry, Space, and Socioeconomics, [touching] on large and small scale energy production, the global anti-war movement, Planet Nine, Dark Matter and Dark Energy, the end of aging, Mahd Arrays and the rise of the southern hemisphere, large scale carbon capture, Climate Change, MAGIC, disease nullification, and more." If you want to learn more about how we got to where we are, then buckle up, and give this a read.</p>
+                            <button id="buy-button" style="
+                                width: 100%; 
+                                max-width: 400px;
+                                padding: 20px 40px; 
+                                background: linear-gradient(135deg, #8b5cf6, #10b981); 
+                                color: white; 
+                                border: none; 
+                                border-radius: 50px; 
+                                font-size: clamp(1.2rem, 4vw, 1.5rem); 
+                                font-weight: bold; 
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+                            ">
+                                BUY NOW - $5
+                            </button>
+                        </div>
+                    `,
+                    signature: 'bf9ce6a21d8639b228c3b6ebb98c3396173a3b7a45c945aa0da921d0c765216677ca80254bba833b69fa104ea91fdd3058394757221b82f2e01489c159bbb234',
+                    teleporterPubKey: '023031231f669c6504ef5939b6b5e22d2d8be76cf46e98297b810138933de2494f',
+                    message: 'A Brief History of Teleportation500',
+                    spell: 'sanora-club',
+                    amount: '500',
+                    teleportedFrom: 'https://peaceloveandredistribution.com/a-brief-history-of-teleportation?payees=me'
+                };
+
+                this.renderTeleportItem(sampleData);
+                
+                // Add a second sample for demonstration
+                const secondSample = {
+                    html: '\n' +
+                      '    <div style="width: 100%; max-width: 500px; text-align: center; color: white;">\n' +
+                      '      <img id="product-image" style="width: 100%; height: auto; max-height: 40vh; object-fit: contain; border-radius: 8px;" src="https://peaceloveandredistribution.com/images/1ffbbd52-8f2c-4d82-ac60-c821065fc94f">\n' +
+                      '      \n' +
+                      '      <h2 style="margin: 20px 0 10px 0; font-size: clamp(1.2rem, 4vw, 2rem);">I Go To Eleven Toddler Tee</h2>\n' +
+                      `      <h4 style="margin: 10px 0; opacity: 0.8; font-weight: normal; font-size: clamp(0.9rem, 2.5vw, 1.1rem);">If you don't get the reference, check out https://www.youtube.com/watch?v=4xgx4k83zzc.</h4>\n` +
+                      `    <button id="buy-button" style="
+                                width: 100%;
+                                max-width: 400px;
+                                padding: 20px 40px;
+                                background: linear-gradient(135deg, #8b5cf6, #10b981);
+                                color: white;
+                                border: none;
+                                border-radius: 50px;
+                                font-size: clamp(1.2rem, 4vw, 1.5rem);
+                                font-weight: bold;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+                            ">
+                                BUY NOW - $5
+                            </button>` +
+                      '    </div>\n' +
+                      '    ',
+                    signature: '30962651df0c04a9d2fc71ca707d12c8b249fb18d4a5d9e8f792f174bf6132e82fcde9318ee9c0a159c83fbcfbc38d093b8585c72105b44fe6ae80cd34681d19',
+                    teleporterPubKey: '023031231f669c6504ef5939b6b5e22d2d8be76cf46e98297b810138933de2494f',
+                    message: "I Go To Eleven Toddler TeeIf you don't get the reference, check out https://www.youtube.com/watch?v=4xgx4k83zzc.1800",
+                    spell: 'sanora-club',
+                    amount: '1800',
+                    teleportedFrom: 'https://peaceloveandredistribution.com/i-go-to-eleven?payees=you'
+                  };
+                secondSample.html = secondSample.html.replace('A Brief History of Teleportation', 'Another Teleport Item');
+                secondSample.html = secondSample.html.replace('Written around the year 2250', 'This is a second sample item to demonstrate the responsive grid layout. Written around the year 2250');
+                this.renderTeleportItem(secondSample);
+            }
+
+            addInteractivity(teleportItem, teleportData) {
+                // Add click handlers or other interactivity as needed
+                const button = teleportItem.querySelector('#buy-button, button');
+                if (button) {
+                    button.innerHTML = 'Go To Product Page';
+                    button.addEventListener('click', () => {
+                        console.log('Teleport action clicked:', teleportData);
+                        // Add your teleport action logic here
+                        window.location.href = teleportData.teleportedFrom;
+                    });
+
+                    // Add hover effects
+                    button.addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-2px)';
+                        this.style.boxShadow = '0 12px 40px rgba(139, 92, 246, 0.4)';
+                    });
+
+                    button.addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                        this.style.boxShadow = '0 8px 32px rgba(139, 92, 246, 0.3)';
+                    });
+                }
+            }
+        }
+
+        // Initialize the teleport viewer when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TeleportViewer();
+        });
+    </script>
+</body>
+</html>

@@ -141,6 +141,12 @@ console.log('products body', res.body);
   res.body.should.equal('foo');
 });
 
+it('should get all products for the base', async () => {
+  const res = await get(`${baseURL}products/base`);
+console.log('products body', res.body);
+  res.body.should.equal('foo');
+});
+
 it('should get product html', async () => {
   const res = await superAgent.get(`${baseURL}products/${savedUser.uuid}/${encodeURIComponent('My product')}/generic`);
 //console.log(res.text);

@@ -283,6 +283,17 @@ console.warn(err);
   }
 });
 
+app.get('/products/base', async (req, res) => {
+  try {
+    const products = await db.getProductsForBase();
+    res.send(products);    
+  } catch(err) {
+console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
 app.use(session({ 
   store: new MemoryStore({
     checkPeriod: 86400000 // prune expired entries every 24h

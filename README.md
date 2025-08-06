@@ -242,3 +242,43 @@ TODO
 TODO
 
 </details>
+
+<details>
+ <summary><code>GET</code> <code><b>/products/base</b></code> <code>Gets all products available on this base server</code></summary>
+
+##### Parameters
+
+None required - this is a public endpoint that returns all products on the base.
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json`                | `Array of product objects`   |
+> | `404`         | `application/json`                | `{"error":"not found"}`                            |
+
+##### Example cURL
+
+> ```bash
+>  curl -X GET https://dev.sanora.allyabase.com/products/base
+> ```
+
+##### Response Format
+
+Returns an array of all product objects from all users on this base:
+
+> ```json
+> [
+>   {
+>     "title": "My Product",
+>     "description": "Product description", 
+>     "price": 1000,
+>     "uuid": "user-uuid-here",
+>     "productId": "product-id-here",
+>     "timestamp": "2025-01-01T00:00:00Z"
+>   }
+> ]
+> ```
+
+</details>
+EOF < /dev/null
