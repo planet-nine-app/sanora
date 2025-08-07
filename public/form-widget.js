@@ -349,6 +349,9 @@
   function calculateImageInputHeight() {
     return 120; // Fixed height for image upload area
   }
+  function calculateArtifactInputHeight() {
+    return 140; // Fixed height for artifact upload area (slightly larger)
+  }
 
   function calculateFormHeight(formConfig) {
     const fields = Object.keys(formConfig).filter(key => key !== 'form');
@@ -374,6 +377,9 @@
       } else if (fieldConfig.type === 'image') {
         const imageHeight = calculateImageInputHeight();
         totalHeight += imageHeight + 50; // Label + image area + padding
+      } else if (fieldConfig.type === 'artifact') {
+        const artifactHeight = calculateArtifactInputHeight();
+        totalHeight += artifactHeight + 50; // Label + artifact area + padding
       } else {
         totalHeight += standardFieldHeight;
       }
@@ -422,10 +428,10 @@
 
     return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
       <!-- Field Background -->
-      <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="40" rx="8" fill="#1c1c20" 
+      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="40" rx="8" fill="#1c1c20" 
             stroke="#444" stroke-width="2" class="input-field"/>
       <!-- HTML Input Field -->
-      <foreignObject x="${x + 5}" y="${y + 15}" width="330" height="30">
+      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="30">
         <input xmlns="http://www.w3.org/1999/xhtml" id="${inputId}" type="text" placeholder="Enter ${text.toLowerCase()}" data-field="${text}" spellcheck="false" style="width:100%; height: 100%; background-color: transparent; color: white; border: none; outline: none; padding: 8px 12px; font-size: 14px; font-family: Arial, sans-serif; border-radius: 6px;"/>
       </foreignObject>`;
   }
@@ -439,12 +445,12 @@
 
     return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
       <!-- Character Counter -->
-      <text x="${x + 340}" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#888" text-anchor="end" id="${counterId}">0/${charLimit}</text>
+      <text x="${x + 640}" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#888" text-anchor="end" id="${counterId}">0/${charLimit}</text>
       <!-- TextArea Background -->
-      <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="${textareaHeight}" rx="8" fill="#1c1c20" 
+      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="${textareaHeight}" rx="8" fill="#1c1c20" 
             stroke="#444" stroke-width="2" class="input-field"/>
       <!-- HTML TextArea Field -->
-      <foreignObject x="${x + 5}" y="${y + 15}" width="330" height="${textareaHeight - 10}">
+      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="${textareaHeight - 10}">
         <textarea xmlns="http://www.w3.org/1999/xhtml" id="${textareaId}" placeholder="Enter ${text.toLowerCase()}" data-field="${text}" maxlength="${charLimit}" spellcheck="false" style="width:100%; height: 100%; background-color: transparent; color: white; border: none; outline: none; padding: 8px 12px; font-size: 14px; font-family: Arial, sans-serif; border-radius: 6px; resize: none;"></textarea>
       </foreignObject>`;
   }
@@ -459,19 +465,48 @@
 
     return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
       <!-- Image Upload Background -->
-      <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="${imageHeight}" rx="8" fill="#1c1c20" 
+      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="${imageHeight}" rx="8" fill="#1c1c20" 
             stroke="#444" stroke-width="2" stroke-dasharray="5,5" class="input-field image-dropzone"/>
       <!-- HTML Image Upload Container -->
-      <foreignObject x="${x + 5}" y="${y + 15}" width="330" height="${imageHeight - 10}">
-        <div xmlns="http://www.w3.org/1999/xhtml" id="${containerId}" class="image-upload-container" style="width:100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
-          <input type="file" id="${inputId}" accept="image/*" data-field="${text}" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;"/>
-          <div id="${previewId}" style="width: 100%; height: 100%; display: none; background-size: cover; background-position: center; border-radius: 6px; position: relative;">
+      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="${imageHeight - 10}">
+        <div xmlns="http://www.w3.org/1999/xhtml" id="${containerId}" class="image-upload-container" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; box-sizing: border-box;">
+          <input type="file" id="${inputId}" accept="image/*" data-field="${text}" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; top: 0; left: 0;"/>
+          <div id="${previewId}" style="width: 100%; height: 100%; display: none; background-size: cover; background-position: center; border-radius: 6px; position: absolute; top: 0; left: 0;">
             <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 16px;" onclick="clearImage('${text}')">&times;</div>
           </div>
-          <div id="${statusId}" style="text-align: center; color: #888; font-size: 14px; pointer-events: none; z-index: 1;">
+          <div id="${statusId}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #888; font-size: 14px; pointer-events: none; z-index: 1; height: 100%; width: 100%;">
             <div style="font-size: 24px; margin-bottom: 8px;">📷</div>
+            <div style="margin-bottom: 4px;">Drag &amp; drop or click to upload</div>
+            <div style="font-size: 12px;">JPG, PNG, GIF (max 5MB)</div>
+          </div>
+        </div>
+      </foreignObject>`;
+  }
+
+  function getArtifactInput(x, y, text, fieldConfig) {
+    const borderId = `${text.replace(/\s+/g, '')}ArtifactBorder`;
+    const containerId = `${text.replace(/\s+/g, '')}ArtifactContainer`;
+    const inputId = `${text.replace(/\s+/g, '')}ArtifactInput`;
+    const previewId = `${text.replace(/\s+/g, '')}ArtifactPreview`;
+    const statusId = `${text.replace(/\s+/g, '')}ArtifactStatus`;
+    const artifactHeight = calculateArtifactInputHeight();
+    return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+      <!-- Artifact Upload Background -->
+      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="${artifactHeight}" rx="8" fill="#1c1c20" 
+            stroke="#444" stroke-width="2" stroke-dasharray="5,5" class="input-field artifact-dropzone"/>
+      <!-- HTML Artifact Upload Container -->
+      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="${artifactHeight - 10}">
+        <div xmlns="http://www.w3.org/1999/xhtml" id="${containerId}" class="artifact-upload-container" style="width:100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+          <input type="file" id="${inputId}" accept=".pdf,.epub,.mobi,.zip,.mp3,.mp4,.exe,.txt,.doc,.docx" data-field="${text}" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;"/>
+          <div id="${previewId}" style="width: 100%; height: 100%; display: none; border: 2px solid #4CAF50; border-radius: 6px; padding: 15px; background: #f8f9fa; position: relative; align-items: center; justify-content: center;">
+            <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 16px;" onclick="clearArtifact('${text}')">&times;</div>
+            <div style="text-align: center; font-size: 14px; color: #333;"><strong>File uploaded:</strong><br><span id="${previewId}Name"></span><br><small id="${previewId}Size" style="color: #666;"></small></div>
+          </div>
+          <div id="${statusId}" style="text-align: center; color: #888; font-size: 14px; pointer-events: none; z-index: 1;">
+            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
             <div>Drag &amp; drop or click to upload</div>
-            <div style="font-size: 12px; margin-top: 4px;">JPG, PNG, GIF (max 5MB)</div>
+            <div style="font-size: 12px; margin-top: 4px;">PDF, EPUB, ZIP, MP3, MP4, EXE, TXT, DOC</div>
+            <div style="font-size: 11px; margin-top: 2px; color: #aaa;">(max 100MB)</div>
           </div>
         </div>
       </foreignObject>`;
@@ -481,15 +516,15 @@
     const widgetId = `${text.replace(/\s+/g, '')}Widget`;
     
     return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
-      <foreignObject x="${x}" y="${y + 10}" width="340" height="180">
+      <foreignObject x="${x}" y="${y + 10}" width="640" height="180">
         <div xmlns="http://www.w3.org/1999/xhtml" id="${widgetId}" class="datetime-widget-container" style="width: 100%; height: 100%;"></div>
       </foreignObject>`;
   }
 
   function getSubmitButton(x, y) {
-    return `<rect id="submitButton" x="${x}" y="${y}" width="300" height="45" rx="22.5" fill="#666666" style="cursor: not-allowed;">
+    return `<rect id="submitButton" x="${x}" y="${y}" width="620" height="45" rx="22.5" fill="#666666" style="cursor: not-allowed;">
         </rect>
-        <text x="${x + 150}" y="${y + 28}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#999999" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
+        <text x="${x + 310}" y="${y + 28}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#999999" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
     `;
   }
 
@@ -514,6 +549,10 @@
         inputs.push(getImageInput(80, currentY, key, fieldConfig));
         const imageHeight = calculateImageInputHeight();
         currentY += imageHeight + 50;
+      } else if (fieldConfig.type === 'artifact') {
+        inputs.push(getArtifactInput(80, currentY, key, fieldConfig));
+        const artifactHeight = calculateArtifactInputHeight();
+        currentY += artifactHeight + 50;
       } else {
         inputs.push(getInput(80, currentY, key, fieldConfig.type));
         currentY += 70;
@@ -526,9 +565,9 @@
     const dynamicHeight = calculateFormHeight(formJSON);
 
     const container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    container.setAttribute('viewBox', `0 0 500 ${dynamicHeight + 100}`);
+    container.setAttribute('viewBox', `0 0 800 ${dynamicHeight + 100}`);
     container.setAttribute('width', '100%');
-    container.setAttribute('height', 'auto');
+    container.setAttribute('height', `${dynamicHeight + 100}px`);
     container.innerHTML = svg;
 
     setTimeout(() => {
@@ -574,6 +613,8 @@
           }
         } else if (fieldConfig.type === 'image') {
           setupImageInput(key);
+        } else if (fieldConfig.type === 'artifact') {
+          setupArtifactInput(key);
         } else {
           const inputId = `${key.replace(/\s+/g, '')}Input`;
           const inputElement = document.getElementById(inputId);
@@ -722,6 +763,131 @@
     // Remove from stored data
     if (window.formImageData && window.formImageData[fieldKey]) {
       delete window.formImageData[fieldKey];
+    }
+  };
+
+  // Artifact upload utility functions
+  function setupArtifactInput(fieldKey) {
+    const inputId = `${fieldKey.replace(/\s+/g, '')}ArtifactInput`;
+    const containerId = `${fieldKey.replace(/\s+/g, '')}ArtifactContainer`;
+    const previewId = `${fieldKey.replace(/\s+/g, '')}ArtifactPreview`;
+    const statusId = `${fieldKey.replace(/\s+/g, '')}ArtifactStatus`;
+    const borderId = `${fieldKey.replace(/\s+/g, '')}ArtifactBorder`;
+    
+    const inputElement = document.getElementById(inputId);
+    const containerElement = document.getElementById(containerId);
+    const previewElement = document.getElementById(previewId);
+    const statusElement = document.getElementById(statusId);
+    const borderElement = document.getElementById(borderId);
+    
+    if (!inputElement) return;
+    
+    // Handle file selection
+    inputElement.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      handleArtifactUpload(file, fieldKey, previewElement, statusElement, borderElement);
+    });
+    
+    // Handle drag and drop
+    if (containerElement) {
+      containerElement.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        borderElement.setAttribute('stroke', 'url(#inputGradient)');
+      });
+      
+      containerElement.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        if (!window.formArtifactData || !window.formArtifactData[fieldKey]) {
+          borderElement.setAttribute('stroke', '#444');
+        }
+      });
+      
+      containerElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        handleArtifactUpload(file, fieldKey, previewElement, statusElement, borderElement);
+      });
+    }
+  }
+
+  function handleArtifactUpload(file, fieldKey, previewElement, statusElement, borderElement) {
+    if (!file) return;
+    
+    // Validate file type (allow most digital goods formats)
+    const allowedTypes = [
+      'application/pdf',
+      'application/epub+zip',
+      'application/x-mobipocket-ebook',
+      'application/zip',
+      'audio/mpeg',
+      'audio/mp3',
+      'video/mp4',
+      'application/octet-stream',
+      'text/plain',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    
+    const allowedExtensions = ['.pdf', '.epub', '.mobi', '.zip', '.mp3', '.mp4', '.exe', '.txt', '.doc', '.docx'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      alert('Please select a supported file type (PDF, EPUB, ZIP, MP3, MP4, EXE, TXT, DOC, etc.)');
+      return;
+    }
+    
+    // Validate file size (100MB limit for artifacts)
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (file.size > maxSize) {
+      alert('File size must be less than 100MB');
+      return;
+    }
+    
+    // Show file preview
+    const previewNameElement = document.getElementById(previewElement.id + 'Name');
+    const previewSizeElement = document.getElementById(previewElement.id + 'Size');
+    
+    if (previewNameElement) previewNameElement.textContent = file.name;
+    if (previewSizeElement) previewSizeElement.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    
+    previewElement.style.display = 'flex';
+    statusElement.style.display = 'none';
+    borderElement.setAttribute('stroke', 'url(#inputGradient)');
+    borderElement.setAttribute('stroke-dasharray', 'none');
+    
+    // Store artifact data for form submission
+    if (!window.formArtifactData) window.formArtifactData = {};
+    window.formArtifactData[fieldKey] = {
+      file: file,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    };
+  }
+
+  // Global function to clear artifact uploads
+  window.clearArtifact = function(fieldKey) {
+    const previewId = `${fieldKey.replace(/\s+/g, '')}ArtifactPreview`;
+    const statusId = `${fieldKey.replace(/\s+/g, '')}ArtifactStatus`;
+    const borderId = `${fieldKey.replace(/\s+/g, '')}ArtifactBorder`;
+    const inputId = `${fieldKey.replace(/\s+/g, '')}ArtifactInput`;
+    
+    const previewElement = document.getElementById(previewId);
+    const statusElement = document.getElementById(statusId);
+    const borderElement = document.getElementById(borderId);
+    const inputElement = document.getElementById(inputId);
+    
+    if (previewElement) previewElement.style.display = 'none';
+    if (statusElement) statusElement.style.display = 'block';
+    if (borderElement) {
+      borderElement.setAttribute('stroke', '#444');
+      borderElement.setAttribute('stroke-dasharray', '5,5');
+    }
+    if (inputElement) inputElement.value = '';
+    
+    // Clear stored data
+    if (window.formArtifactData && window.formArtifactData[fieldKey]) {
+      delete window.formArtifactData[fieldKey];
     }
   };
 
