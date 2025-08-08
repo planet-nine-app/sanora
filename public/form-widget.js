@@ -638,7 +638,50 @@
 
     // Add form validation after a short delay to ensure all inputs are set up
     setTimeout(() => {
+      console.log('🔧 Setting up form validation and submit handler');
       validateFormAndUpdateSubmit(formJSON);
+      
+      // Add submit button click handler
+      const submitButton = document.getElementById('submitButton');
+      console.log('🔍 Submit button element:', submitButton);
+      console.log('🔍 onSubmit callback provided:', typeof onSubmit, onSubmit);
+      
+      if (submitButton && onSubmit) {
+        console.log('✅ Adding click handler to submit button');
+        submitButton.addEventListener('click', (e) => {
+          console.log('🖱️ Submit button clicked!');
+          e.preventDefault();
+          
+          console.log('🔍 Button cursor style:', submitButton.style.cursor);
+          console.log('🔍 Button fill attribute:', submitButton.getAttribute('fill'));
+          
+          // Only allow submission if button is enabled
+          if (submitButton.style.cursor === 'pointer') {
+            console.log('✅ Button is enabled, proceeding with submission');
+            
+            // Collect all form data
+            console.log('📊 Collecting form data...');
+            const formData = collectFormData(formJSON);
+            console.log('📊 Collected form data:', formData);
+            
+            // Call the provided onSubmit callback
+            if (typeof onSubmit === 'function') {
+              console.log('🚀 Calling onSubmit callback with form data');
+              onSubmit(formData);
+            } else {
+              console.error('❌ onSubmit is not a function:', typeof onSubmit);
+            }
+          } else {
+            console.warn('⚠️ Submit button is disabled (cursor:', submitButton.style.cursor + ')');
+          }
+        });
+      } else {
+        console.error('❌ Cannot add submit handler:', {
+          submitButton: !!submitButton,
+          onSubmit: !!onSubmit,
+          onSubmitType: typeof onSubmit
+        });
+      }
       
       // Add validation listeners to all inputs
       Object.keys(formJSON).forEach((key) => {
@@ -679,13 +722,18 @@
 
   // Form validation function
   function validateFormAndUpdateSubmit(formJSON) {
+    console.log('🔍 Running form validation...');
     const submitButton = document.getElementById('submitButton');
     const submitText = submitButton?.nextElementSibling;
     
-    if (!submitButton) return;
+    if (!submitButton) {
+      console.warn('⚠️ Submit button not found during validation');
+      return;
+    }
     
     // Check if all required fields are filled
     let allFieldsFilled = true;
+    const fieldValidation = {};
     
     Object.keys(formJSON).forEach((key) => {
       if (key === 'form') return;
@@ -696,39 +744,53 @@
       if (!isRequired) return;
       
       if (fieldConfig.type === 'image') {
-        if (!window.formImageData || !window.formImageData[key]) {
+        const hasImage = !!(window.formImageData && window.formImageData[key]);
+        fieldValidation[key] = { type: 'image', required: isRequired, filled: hasImage };
+        if (isRequired && !hasImage) {
           allFieldsFilled = false;
         }
       } else if (fieldConfig.type === 'artifact') {
-        if (!window.formArtifactData || !window.formArtifactData[key]) {
+        const hasArtifact = !!(window.formArtifactData && window.formArtifactData[key]);
+        fieldValidation[key] = { type: 'artifact', required: isRequired, filled: hasArtifact };
+        if (isRequired && !hasArtifact) {
           allFieldsFilled = false;
         }
       } else if (fieldConfig.type === 'textarea') {
         const textareaId = `${key.replace(/\s+/g, '')}Textarea`;
         const textareaElement = document.getElementById(textareaId);
-        if (!textareaElement || !textareaElement.value.trim()) {
+        const hasValue = !!(textareaElement && textareaElement.value.trim());
+        fieldValidation[key] = { type: 'textarea', required: isRequired, filled: hasValue, value: textareaElement?.value };
+        if (isRequired && !hasValue) {
           allFieldsFilled = false;
         }
       } else if (fieldConfig.type === 'datetime') {
         // DateTime validation would need to check the datetime widget state
         // For now, we'll assume it's optional
+        fieldValidation[key] = { type: 'datetime', required: false, filled: true };
       } else {
         const inputId = `${key.replace(/\s+/g, '')}Input`;
         const inputElement = document.getElementById(inputId);
-        if (!inputElement || !inputElement.value.trim()) {
+        const hasValue = !!(inputElement && inputElement.value.trim());
+        fieldValidation[key] = { type: 'text', required: isRequired, filled: hasValue, value: inputElement?.value };
+        if (isRequired && !hasValue) {
           allFieldsFilled = false;
         }
       }
     });
     
+    console.log('📋 Field validation results:', fieldValidation);
+    console.log('✅ All fields filled:', allFieldsFilled);
+    
     // Update submit button appearance based on validation
     if (allFieldsFilled) {
+      console.log('🟢 Enabling submit button');
       submitButton.setAttribute('fill', 'url(#buttonGradient)');
       submitButton.style.cursor = 'pointer';
       if (submitText) {
         submitText.setAttribute('fill', '#ffffff');
       }
     } else {
+      console.log('🔴 Disabling submit button');
       submitButton.setAttribute('fill', '#666666');
       submitButton.style.cursor = 'not-allowed';
       if (submitText) {
@@ -737,10 +799,55 @@
     }
   }
 
+  // Function to collect all form data
+  function collectFormData(formJSON) {
+    console.log('📊 Starting form data collection...');
+    const formData = {};
+    
+    Object.keys(formJSON).forEach((key) => {
+      if (key === 'form') return;
+      
+      const fieldConfig = formJSON[key];
+      
+      if (fieldConfig.type === 'image') {
+        // Get image data from global storage
+        if (window.formImageData && window.formImageData[key]) {
+          formData[key] = window.formImageData[key];
+        } else {
+          formData[key] = null;
+        }
+      } else if (fieldConfig.type === 'artifact') {
+        // Get artifact data from global storage
+        if (window.formArtifactData && window.formArtifactData[key]) {
+          formData[key] = window.formArtifactData[key];
+        } else {
+          formData[key] = null;
+        }
+      } else if (fieldConfig.type === 'textarea') {
+        // Get textarea value
+        const textareaId = `${key.replace(/\s+/g, '')}Textarea`;
+        const textareaElement = document.getElementById(textareaId);
+        formData[key] = textareaElement ? textareaElement.value : '';
+      } else if (fieldConfig.type === 'datetime') {
+        // Get datetime data from global storage
+        formData[key] = window.dateTimes || [];
+      } else {
+        // Get regular input value
+        const inputId = `${key.replace(/\s+/g, '')}Input`;
+        const inputElement = document.getElementById(inputId);
+        formData[key] = inputElement ? inputElement.value : '';
+      }
+    });
+    
+    console.log('📊 Form data collection complete:', formData);
+    return formData;
+  }
+
   // Export functions
   window.getForm = getForm;
   window.createDateTimeSection = createDateTimeSection;
   window.validateFormAndUpdateSubmit = validateFormAndUpdateSubmit;
+  window.collectFormData = collectFormData;
 
   // Image upload utility functions
   function setupImageInput(fieldKey) {
