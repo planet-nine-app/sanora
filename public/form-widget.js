@@ -391,7 +391,7 @@
   function getBackgroundAndGradients(formConfig) {
     const dynamicHeight = calculateFormHeight(formConfig);
 
-    return `<rect width="500" height="${dynamicHeight}" fill="transparent"/>
+    return `<rect width="100%" height="${dynamicHeight}" fill="transparent"/>
     
     <!-- Form Container with Metallic Background -->
     <linearGradient id="metallicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -399,14 +399,14 @@
       <stop offset="50%" stop-color="#323236"/>
       <stop offset="100%" stop-color="#2a2a2e"/>
     </linearGradient>
-    <rect x="50" y="50" width="400" height="${dynamicHeight}" rx="15" fill="url(#metallicBackground)" 
-      stroke="#444" stroke-width="1"/>
+    <rect x="2.5%" y="50" width="95%" height="${dynamicHeight}" rx="15" fill="url(#metallicBackground)" 
+      stroke="#444" stroke-width="0.15%"/>
     
     <!-- Subtle Metallic Highlight -->
-    <line x1="51" y1="52" x2="449" y2="52" stroke="#555" stroke-width="1" opacity="0.5"/>
+    <line x1="2.6%" y1="52" x2="97.4%" y2="52" stroke="#555" stroke-width="0.15%" opacity="0.5"/>
     
     <!-- Form Header -->
-    <text x="250" y="85" font-family="Arial, sans-serif" font-size="24" font-weight="bold" 
+    <text x="50%" y="85" font-family="Arial, sans-serif" font-size="1.5em" font-weight="bold" 
       fill="#ffffff" text-anchor="middle">CONTACT FORM</text>
     
     <!-- Define the gradient for active input borders -->
@@ -426,12 +426,12 @@
     const borderId = `${text.replace(/\s+/g, '')}Border`;
     const inputId = `${text.replace(/\s+/g, '')}Input`;
 
-    return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+    return `<text x="${x}%" y="${y}" font-family="Arial, sans-serif" font-size="0.875em" fill="#bbbbbb">${text}</text>
       <!-- Field Background -->
-      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="40" rx="8" fill="#1c1c20" 
-            stroke="#444" stroke-width="2" class="input-field"/>
+      <rect id="${borderId}" x="${x}%" y="${y + 10}" width="90%" height="40" rx="8" fill="#1c1c20" 
+            stroke="#444" stroke-width="0.25%" class="input-field"/>
       <!-- HTML Input Field -->
-      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="30">
+      <foreignObject x="${x + 0.5}%" y="${y + 15}" width="89%" height="30">
         <input xmlns="http://www.w3.org/1999/xhtml" id="${inputId}" type="text" placeholder="Enter ${text.toLowerCase()}" data-field="${text}" spellcheck="false" style="width:100%; height: 100%; background-color: transparent; color: white; border: none; outline: none; padding: 8px 12px; font-size: 14px; font-family: Arial, sans-serif; border-radius: 6px;"/>
       </foreignObject>`;
   }
@@ -443,14 +443,14 @@
     const charLimit = fieldConfig.charLimit || 500;
     const textareaHeight = calculateTextAreaHeight(charLimit);
 
-    return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+    return `<text x="${x}%" y="${y}" font-family="Arial, sans-serif" font-size="0.875em" fill="#bbbbbb">${text}</text>
       <!-- Character Counter -->
-      <text x="${x + 640}" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#888" text-anchor="end" id="${counterId}">0/${charLimit}</text>
+      <text x="${x + 90}%" y="${y}" font-family="Arial, sans-serif" font-size="0.75em" fill="#888" text-anchor="end" id="${counterId}">0/${charLimit}</text>
       <!-- TextArea Background -->
-      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="${textareaHeight}" rx="8" fill="#1c1c20" 
-            stroke="#444" stroke-width="2" class="input-field"/>
+      <rect id="${borderId}" x="${x}%" y="${y + 10}" width="90%" height="${textareaHeight}" rx="8" fill="#1c1c20" 
+            stroke="#444" stroke-width="0.25%" class="input-field"/>
       <!-- HTML TextArea Field -->
-      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="${textareaHeight - 10}">
+      <foreignObject x="${x + 0.5}%" y="${y + 15}" width="89%" height="${textareaHeight - 10}">
         <textarea xmlns="http://www.w3.org/1999/xhtml" id="${textareaId}" placeholder="Enter ${text.toLowerCase()}" data-field="${text}" maxlength="${charLimit}" spellcheck="false" style="width:100%; height: 100%; background-color: transparent; color: white; border: none; outline: none; padding: 8px 12px; font-size: 14px; font-family: Arial, sans-serif; border-radius: 6px; resize: none;"></textarea>
       </foreignObject>`;
   }
@@ -463,12 +463,12 @@
     const statusId = `${text.replace(/\s+/g, '')}ImageStatus`;
     const imageHeight = calculateImageInputHeight();
 
-    return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+    return `<text x="${x}%" y="${y}" font-family="Arial, sans-serif" font-size="0.875em" fill="#bbbbbb">${text}</text>
       <!-- Image Upload Background -->
-      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="${imageHeight}" rx="8" fill="#1c1c20" 
-            stroke="#444" stroke-width="2" stroke-dasharray="5,5" class="input-field image-dropzone"/>
+      <rect id="${borderId}" x="${x}%" y="${y + 10}" width="90%" height="${imageHeight}" rx="8" fill="#1c1c20" 
+            stroke="#444" stroke-width="0.25%" stroke-dasharray="0.7% 0.7%" class="input-field image-dropzone"/>
       <!-- HTML Image Upload Container -->
-      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="${imageHeight - 10}">
+      <foreignObject x="${x + 0.5}%" y="${y + 15}" width="89%" height="${imageHeight - 10}">
         <div xmlns="http://www.w3.org/1999/xhtml" id="${containerId}" class="image-upload-container" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; box-sizing: border-box;">
           <input type="file" id="${inputId}" accept="image/*" data-field="${text}" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; top: 0; left: 0;"/>
           <div id="${previewId}" style="width: 100%; height: 100%; display: none; background-size: cover; background-position: center; border-radius: 6px; position: absolute; top: 0; left: 0;">
@@ -490,12 +490,12 @@
     const previewId = `${text.replace(/\s+/g, '')}ArtifactPreview`;
     const statusId = `${text.replace(/\s+/g, '')}ArtifactStatus`;
     const artifactHeight = calculateArtifactInputHeight();
-    return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+    return `<text x="${x}%" y="${y}" font-family="Arial, sans-serif" font-size="0.875em" fill="#bbbbbb">${text}</text>
       <!-- Artifact Upload Background -->
-      <rect id="${borderId}" x="${x}" y="${y + 10}" width="640" height="${artifactHeight}" rx="8" fill="#1c1c20" 
-            stroke="#444" stroke-width="2" stroke-dasharray="5,5" class="input-field artifact-dropzone"/>
+      <rect id="${borderId}" x="${x}%" y="${y + 10}" width="90%" height="${artifactHeight}" rx="8" fill="#1c1c20" 
+            stroke="#444" stroke-width="0.25%" stroke-dasharray="0.7% 0.7%" class="input-field artifact-dropzone"/>
       <!-- HTML Artifact Upload Container -->
-      <foreignObject x="${x + 5}" y="${y + 15}" width="630" height="${artifactHeight - 10}">
+      <foreignObject x="${x + 0.5}%" y="${y + 15}" width="89%" height="${artifactHeight - 10}">
         <div xmlns="http://www.w3.org/1999/xhtml" id="${containerId}" class="artifact-upload-container" style="width:100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
           <input type="file" id="${inputId}" accept=".pdf,.epub,.mobi,.zip,.mp3,.mp4,.exe,.txt,.doc,.docx" data-field="${text}" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;"/>
           <div id="${previewId}" style="width: 100%; height: 100%; display: none; border: 2px solid #4CAF50; border-radius: 6px; padding: 15px; background: #f8f9fa; position: relative; align-items: center; justify-content: center;">
@@ -515,16 +515,16 @@
   function getDateTimeWidget(x, y, text) {
     const widgetId = `${text.replace(/\s+/g, '')}Widget`;
     
-    return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
-      <foreignObject x="${x}" y="${y + 10}" width="640" height="180">
+    return `<text x="${x}%" y="${y}" font-family="Arial, sans-serif" font-size="0.875em" fill="#bbbbbb">${text}</text>
+      <foreignObject x="${x}%" y="${y + 10}" width="90%" height="180">
         <div xmlns="http://www.w3.org/1999/xhtml" id="${widgetId}" class="datetime-widget-container" style="width: 100%; height: 100%;"></div>
       </foreignObject>`;
   }
 
   function getSubmitButton(x, y) {
-    return `<rect id="submitButton" x="${x}" y="${y}" width="620" height="45" rx="22.5" fill="#666666" style="cursor: not-allowed;">
+    return `<rect id="submitButton" x="${x}%" y="${y}" width="87%" height="45" rx="22.5" fill="#666666" style="cursor: not-allowed;">
         </rect>
-        <text x="${x + 310}" y="${y + 28}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#999999" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
+        <text x="50%" y="${y + 28}" font-family="Arial, sans-serif" font-size="1em" font-weight="bold" fill="#999999" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
     `;
   }
 
@@ -538,36 +538,37 @@
       
       const fieldConfig = formJSON[key];
       if (fieldConfig.type === 'datetime') {
-        inputs.push(getDateTimeWidget(80, currentY, key));
+        inputs.push(getDateTimeWidget(5, currentY, key));
         currentY += 200;
       } else if (fieldConfig.type === 'textarea') {
-        inputs.push(getTextArea(80, currentY, key, fieldConfig));
+        inputs.push(getTextArea(5, currentY, key, fieldConfig));
         const charLimit = fieldConfig.charLimit || 500;
         const textareaHeight = calculateTextAreaHeight(charLimit);
         currentY += textareaHeight + 50;
       } else if (fieldConfig.type === 'image') {
-        inputs.push(getImageInput(80, currentY, key, fieldConfig));
+        inputs.push(getImageInput(5, currentY, key, fieldConfig));
         const imageHeight = calculateImageInputHeight();
         currentY += imageHeight + 50;
       } else if (fieldConfig.type === 'artifact') {
-        inputs.push(getArtifactInput(80, currentY, key, fieldConfig));
+        inputs.push(getArtifactInput(5, currentY, key, fieldConfig));
         const artifactHeight = calculateArtifactInputHeight();
         currentY += artifactHeight + 50;
       } else {
-        inputs.push(getInput(80, currentY, key, fieldConfig.type));
+        inputs.push(getInput(5, currentY, key, fieldConfig.type));
         currentY += 70;
       }
     });
     
-    inputs.push(getSubmitButton(100, currentY + 20));
+    inputs.push(getSubmitButton(6.5, currentY + 20));
     
     const svg = getBackgroundAndGradients(formJSON) + inputs.join('');
     const dynamicHeight = calculateFormHeight(formJSON);
 
     const container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    container.setAttribute('viewBox', `0 0 800 ${dynamicHeight + 100}`);
+    container.setAttribute('viewBox', `0 0 1000 ${dynamicHeight + 100}`);
     container.setAttribute('width', '100%');
-    container.setAttribute('height', `${dynamicHeight + 100}px`);
+    container.setAttribute('height', 'auto');
+    container.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     container.innerHTML = svg;
 
     setTimeout(() => {
