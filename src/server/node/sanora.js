@@ -711,5 +711,27 @@ app.get('/peaceloveandredistribution', (req, res) => {
   res.sendFile(htmlPath);
 });
 
+// Serve teleportable products page with layout options
+app.get('/teleportable-products', (req, res) => {
+  const layout = req.query.layout || 'vertical-scrolling-stack';
+  
+  let filename;
+  switch(layout) {
+    case 'horizontal-scrolling-stack':
+      filename = 'teleportable-products-horizontal.html';
+      break;
+    case 'vertical-scrolling-stack':
+    default:
+      filename = 'teleportable-products-vertical.html';
+      break;
+  }
+  
+  const teleportablePath = path.join(process.cwd(), 'public', filename);
+  if(!fs.existsSync(teleportablePath)) {
+    return res.status(404).send('Not found');
+  }
+  res.sendFile(teleportablePath);
+});
+
 app.listen(process.env.PORT || 7243);
 console.log('Join the club');
