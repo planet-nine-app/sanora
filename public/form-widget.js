@@ -529,6 +529,9 @@
   }
 
   function getForm(formJSON, onSubmit) {
+    // Store formJSON globally for validation access
+    window.currentFormJSON = formJSON;
+    
     const keys = Object.keys(formJSON);
     let currentY = 130;
     const inputs = [];
@@ -567,7 +570,7 @@
     const container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     container.setAttribute('viewBox', `0 0 1000 ${dynamicHeight + 100}`);
     container.setAttribute('width', '100%');
-    container.setAttribute('height', 'auto');
+    container.setAttribute('height', `${dynamicHeight + 100}px`);
     container.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     container.innerHTML = svg;
 
@@ -633,12 +636,111 @@
       });
     }, 100);
 
+    // Add form validation after a short delay to ensure all inputs are set up
+    setTimeout(() => {
+      validateFormAndUpdateSubmit(formJSON);
+      
+      // Add validation listeners to all inputs
+      Object.keys(formJSON).forEach((key) => {
+        if(key === 'form') return;
+        
+        const fieldConfig = formJSON[key];
+        
+        if (fieldConfig.type === 'image') {
+          const inputId = `${key.replace(/\s+/g, '')}ImageInput`;
+          const inputElement = document.getElementById(inputId);
+          if (inputElement) {
+            inputElement.addEventListener('change', () => validateFormAndUpdateSubmit(formJSON));
+          }
+        } else if (fieldConfig.type === 'artifact') {
+          const inputId = `${key.replace(/\s+/g, '')}ArtifactInput`;
+          const inputElement = document.getElementById(inputId);
+          if (inputElement) {
+            inputElement.addEventListener('change', () => validateFormAndUpdateSubmit(formJSON));
+          }
+        } else if (fieldConfig.type === 'textarea') {
+          const textareaId = `${key.replace(/\s+/g, '')}Textarea`;
+          const textareaElement = document.getElementById(textareaId);
+          if (textareaElement) {
+            textareaElement.addEventListener('input', () => validateFormAndUpdateSubmit(formJSON));
+          }
+        } else if (fieldConfig.type !== 'datetime') {
+          const inputId = `${key.replace(/\s+/g, '')}Input`;
+          const inputElement = document.getElementById(inputId);
+          if (inputElement) {
+            inputElement.addEventListener('input', () => validateFormAndUpdateSubmit(formJSON));
+          }
+        }
+      });
+    }, 200);
+
     return container;
+  }
+
+  // Form validation function
+  function validateFormAndUpdateSubmit(formJSON) {
+    const submitButton = document.getElementById('submitButton');
+    const submitText = submitButton?.nextElementSibling;
+    
+    if (!submitButton) return;
+    
+    // Check if all required fields are filled
+    let allFieldsFilled = true;
+    
+    Object.keys(formJSON).forEach((key) => {
+      if (key === 'form') return;
+      
+      const fieldConfig = formJSON[key];
+      const isRequired = fieldConfig.required !== false; // Default to required unless explicitly false
+      
+      if (!isRequired) return;
+      
+      if (fieldConfig.type === 'image') {
+        if (!window.formImageData || !window.formImageData[key]) {
+          allFieldsFilled = false;
+        }
+      } else if (fieldConfig.type === 'artifact') {
+        if (!window.formArtifactData || !window.formArtifactData[key]) {
+          allFieldsFilled = false;
+        }
+      } else if (fieldConfig.type === 'textarea') {
+        const textareaId = `${key.replace(/\s+/g, '')}Textarea`;
+        const textareaElement = document.getElementById(textareaId);
+        if (!textareaElement || !textareaElement.value.trim()) {
+          allFieldsFilled = false;
+        }
+      } else if (fieldConfig.type === 'datetime') {
+        // DateTime validation would need to check the datetime widget state
+        // For now, we'll assume it's optional
+      } else {
+        const inputId = `${key.replace(/\s+/g, '')}Input`;
+        const inputElement = document.getElementById(inputId);
+        if (!inputElement || !inputElement.value.trim()) {
+          allFieldsFilled = false;
+        }
+      }
+    });
+    
+    // Update submit button appearance based on validation
+    if (allFieldsFilled) {
+      submitButton.setAttribute('fill', 'url(#buttonGradient)');
+      submitButton.style.cursor = 'pointer';
+      if (submitText) {
+        submitText.setAttribute('fill', '#ffffff');
+      }
+    } else {
+      submitButton.setAttribute('fill', '#666666');
+      submitButton.style.cursor = 'not-allowed';
+      if (submitText) {
+        submitText.setAttribute('fill', '#999999');
+      }
+    }
   }
 
   // Export functions
   window.getForm = getForm;
   window.createDateTimeSection = createDateTimeSection;
+  window.validateFormAndUpdateSubmit = validateFormAndUpdateSubmit;
 
   // Image upload utility functions
   function setupImageInput(fieldKey) {
@@ -730,6 +832,17 @@
       };
     };
     reader.readAsDataURL(file);
+    
+    // Trigger form validation after successful image upload
+    if (typeof validateFormAndUpdateSubmit === 'function') {
+      // Get formJSON from window context if available
+      setTimeout(() => {
+        const forms = document.querySelectorAll('svg');
+        if (forms.length > 0 && window.currentFormJSON) {
+          validateFormAndUpdateSubmit(window.currentFormJSON);
+        }
+      }, 100);
+    }
   }
   
   window.clearImage = function(fieldKey) {
@@ -764,6 +877,13 @@
     // Remove from stored data
     if (window.formImageData && window.formImageData[fieldKey]) {
       delete window.formImageData[fieldKey];
+    }
+    
+    // Trigger form validation after clearing image
+    if (typeof validateFormAndUpdateSubmit === 'function' && window.currentFormJSON) {
+      setTimeout(() => {
+        validateFormAndUpdateSubmit(window.currentFormJSON);
+      }, 100);
     }
   };
 
@@ -864,6 +984,13 @@
       size: file.size,
       type: file.type
     };
+    
+    // Trigger form validation after successful artifact upload
+    if (typeof validateFormAndUpdateSubmit === 'function' && window.currentFormJSON) {
+      setTimeout(() => {
+        validateFormAndUpdateSubmit(window.currentFormJSON);
+      }, 100);
+    }
   }
 
   // Global function to clear artifact uploads
@@ -889,6 +1016,13 @@
     // Clear stored data
     if (window.formArtifactData && window.formArtifactData[fieldKey]) {
       delete window.formArtifactData[fieldKey];
+    }
+    
+    // Trigger form validation after clearing artifact
+    if (typeof validateFormAndUpdateSubmit === 'function' && window.currentFormJSON) {
+      setTimeout(() => {
+        validateFormAndUpdateSubmit(window.currentFormJSON);
+      }, 100);
     }
   };
 
