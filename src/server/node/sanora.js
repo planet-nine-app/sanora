@@ -747,25 +747,122 @@ app.get('/peaceloveandredistribution', (req, res) => {
 });
 
 // Serve teleportable products page with layout options
-app.get('/teleportable-products', (req, res) => {
+app.get('/teleportable-products', async (req, res) => {
   const layout = req.query.layout || 'vertical-scrolling-stack';
   
-  let filename;
-  switch(layout) {
-    case 'horizontal-scrolling-stack':
-      filename = 'teleportable-products-horizontal.html';
-      break;
-    case 'vertical-scrolling-stack':
-    default:
-      filename = 'teleportable-products-vertical.html';
-      break;
+  try {
+    // Get all products from the base
+    const products = await db.getProductsForBase();
+    
+    // Generate teleport signature
+    let signature = '';
+    let message = '';
+    let pubKey = basePubKey || '';
+    
+    if (basePubKey) {
+      try {
+        const teleportKeys = await getOrCreateKeys();
+        const timestamp = Date.now().toString();
+        message = `${timestamp}:planet-nine-marketplace-products:teleport`;
+        signature = await sessionless.sign(message, teleportKeys);
+        pubKey = teleportKeys.publicKey;
+      } catch (err) {
+        console.warn('Failed to sign teleport tag:', err);
+      }
+    }
+    
+    // Generate the HTML with products embedded
+    let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Nine Products - Teleportable Feed</title>
+</head>
+<body style="margin: 0; padding: 0;">
+    <!-- Teleportable Product Feed with Embedded Products -->
+    <teleport id="planet-nine-products" type="feed" category="marketplace" signature="${signature}" message="${message}" pubKey="${pubKey}">
+        <feed-meta>
+            <title>Planet Nine Marketplace</title>
+            <description>Discover unique products from the Planet Nine ecosystem</description>
+            <last-updated>${new Date().toISOString()}</last-updated>
+            <source-url>${req.protocol}://${req.get('host')}/teleportable-products</source-url>
+        </feed-meta>`;
+    
+    // Add each product as a teleportal within the teleport tag
+    if (products && products.length > 0) {
+      products.forEach(userProducts => {
+        Object.values(userProducts).forEach(product => {
+          const baseUrl = req.protocol + '://' + req.get('host');
+          const price = product.price ? (product.price / 100).toFixed(2) : '0.00';
+          
+          html += `
+        <teleportal id="${product.productId || 'product-' + Date.now()}" category="${product.category || 'general'}" price="${product.price || '0'}" currency="USD">
+            <title>${product.title || 'Untitled Product'}</title>
+            <description>${product.description || 'No description available'}</description>
+            <url>${baseUrl}/products/${product.uuid}/${encodeURIComponent(product.title)}</url>
+            <image>${product.image ? baseUrl + '/images/' + product.image : ''}</image>
+            <tags>${product.tags || 'product,marketplace'}</tags>
+            <in-stock>true</in-stock>
+            <rating>${product.rating || '0'}</rating>
+        </teleportal>`;
+        });
+      });
+    }
+    
+    html += `
+    </teleport>
+    
+    <!-- Visual Product Display with Inline Styles -->
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+        <div style="text-align: center; margin-bottom: 30px; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            <h1 style="font-size: 2.5em; margin-bottom: 10px;">🌌 Planet Nine Products</h1>
+            <p style="font-size: 1.1em; opacity: 0.95;">Teleportable Product Feed</p>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 20px;">`;
+    
+    // Add product cards with inline styles
+    if (products && products.length > 0) {
+      products.forEach(userProducts => {
+        Object.values(userProducts).forEach(product => {
+          const baseUrl = req.protocol + '://' + req.get('host');
+          const price = product.price ? '$' + (product.price / 100).toFixed(2) : 'Free';
+          
+          html += `
+            <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 3em; ${product.image ? `background: url(${baseUrl}/images/${product.image}) center/cover;` : ''}">
+                    ${!product.image ? '📦' : ''}
+                </div>
+                <div style="padding: 20px;">
+                    <h3 style="font-size: 1.4em; margin: 0 0 10px 0; color: #2c3e50;">${product.title || 'Untitled Product'}</h3>
+                    <p style="color: #7f8c8d; line-height: 1.5; margin: 0 0 15px 0;">${product.description || 'No description available'}</p>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #27ae60; margin-bottom: 15px;">${price}</div>
+                    <a href="${baseUrl}/products/${product.uuid}/${encodeURIComponent(product.title)}" style="display: block; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 24px; border-radius: 25px; font-size: 1em; font-weight: bold;">View Product</a>
+                </div>
+            </div>`;
+        });
+      });
+    } else {
+      html += `
+            <div style="text-align: center; color: white; padding: 40px; font-size: 1.2em;">
+                📦 No products available yet
+            </div>`;
+    }
+    
+    html += `
+        </div>
+    </div>
+</body>
+</html>`;
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+    
+  } catch (error) {
+    console.error('Error generating teleportable products:', error);
+    res.status(500).send('Error generating product feed');
   }
-  
-  const teleportablePath = path.join(process.cwd(), 'public', filename);
-  if(!fs.existsSync(teleportablePath)) {
-    return res.status(404).send('Not found');
-  }
-  res.sendFile(teleportablePath);
 });
 
 app.listen(process.env.PORT || 7243);
