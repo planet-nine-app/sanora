@@ -272,9 +272,9 @@ console.warn(err);
   }
 });
 
-app.get('/products/:uuid', async (req, res) => {
+app.get('/products/base', async (req, res) => {
   try {
-    const products = await db.getProducts(req.params.uuid);
+    const products = await db.getProductsForBase();
     res.send(products);    
   } catch(err) {
 console.warn(err);
@@ -283,9 +283,9 @@ console.warn(err);
   }
 });
 
-app.get('/products/base', async (req, res) => {
+app.get('/products/:uuid', async (req, res) => {
   try {
-    const products = await db.getProductsForBase();
+    const products = await db.getProducts(req.params.uuid);
     res.send(products);    
   } catch(err) {
 console.warn(err);
