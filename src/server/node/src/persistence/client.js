@@ -86,6 +86,7 @@ createClient.connect = () => {
   return {
     set,
     get,
+    getAll,
     del
   };
 };
