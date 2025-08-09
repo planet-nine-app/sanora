@@ -14,6 +14,7 @@ import addie from 'addie-js';
 import sessionless from 'sessionless-node';
 import fs from 'fs';
 import path from 'path';
+import { signTeleportTags } from './sign-teleport-tags.js';
 
 const MemoryStore = store(session);
 
@@ -43,6 +44,15 @@ console.log('updated addie user is: ', addieUser);
     await sessionless.generateKeys(() => {}, db.getKeys);
     await db.putUser({pubKey: keys.pubKey, addieUser});
   }
+}
+
+// Sign teleport tags on startup
+console.log('🏷️ Signing teleport tags for content teleportation...');
+try {
+  await signTeleportTags();
+  console.log('✅ Teleport tags signed successfully');
+} catch (error) {
+  console.warn('⚠️ Failed to sign teleport tags:', error.message);
 }
 
 const app = express();
