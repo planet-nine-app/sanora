@@ -40,14 +40,32 @@ const get = async (key) => {
 };
 
 const getAll = async (pattern) => {
-  const files = await fs.readdirSync(basePath, {recursive: true})
-  .filter(file => file.indexOf(pattern) > -1)
-  .map(file => ({
-    filename: file,
-    content: fs.readFileSync(file, 'utf8')
-  }));
+  const entries = await fs.readdir(basePath, {recursive: true, withFileTypes: true});
+  
+  const filteredEntries = entries.filter(entry => {
+    const isFile = entry.isFile();
+    const relativePath = entry.path ? 
+      path.relative(basePath, path.join(entry.path, entry.name)) : 
+      entry.name;
+    const matchesPattern = relativePath.indexOf(pattern) > -1;
+    
+    return isFile && matchesPattern;
+  });
+  
+  const files = filteredEntries.map(async entry => {
+    const fullPath = path.join(entry.path || basePath, entry.name);
+    const relativePath = entry.path ? 
+      path.relative(basePath, path.join(entry.path, entry.name)) : 
+      entry.name;
+    
+    return {
+      filename: relativePath,
+      content: await fs.readFile(fullPath, 'utf8')
+    };
+  });
 
-  return files;
+  const contents = await Promise.all(files);
+  return contents;
 };
 
 const del = async (key) => {

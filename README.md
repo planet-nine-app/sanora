@@ -281,4 +281,66 @@ Returns an array of all product objects from all users on this base:
 > ```
 
 </details>
-EOF < /dev/null
+
+<details>
+ <summary><code>GET</code> <code><b>/teleportable-products</b></code> <code>Returns teleportable product feed pages for embedding in other websites</code></summary>
+
+##### Parameters
+
+> | name         |  required     | data type               | description                                                           |
+> |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | layout       |  false    | string                  | Layout type: "vertical-scrolling-stack" (default) or "horizontal-scrolling-stack" |
+
+##### Supported Layouts
+
+**Vertical Scrolling Stack** (default):
+- Products displayed in a single vertical column
+- Centered layout with max width of 600px
+- Natural vertical scrolling behavior
+- Perfect for narrow embedding spaces
+
+**Horizontal Scrolling Stack**:
+- Products displayed in a horizontal carousel
+- Interactive scroll buttons and smooth scrolling
+- Fixed card width for consistent presentation
+- Great for showcasing products in banner format
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `text/html`                       | HTML page with embedded teleportable product feed   |
+> | `404`         | `text/plain`                      | `Not found`                            |
+
+##### Example URLs
+
+> ```bash
+> # Vertical layout (default)
+> https://dev.sanora.allyabase.com/teleportable-products
+> 
+> # Vertical layout (explicit)
+> https://dev.sanora.allyabase.com/teleportable-products?layout=vertical-scrolling-stack
+> 
+> # Horizontal layout
+> https://dev.sanora.allyabase.com/teleportable-products?layout=horizontal-scrolling-stack
+> ```
+
+##### Teleportation Protocol
+
+These pages include proper `<teleport>` and `<teleportal>` tags that comply with the Planet Nine teleportation protocol, allowing other websites to:
+
+- Parse and extract product information
+- Embed product feeds dynamically  
+- Create cross-site product discovery
+- Build decentralized marketplace experiences
+
+##### Features
+
+- **JavaScript-free teleport tags**: All styling uses inline CSS for maximum compatibility
+- **Responsive design**: Works on desktop and mobile devices
+- **Visual feedback**: Hover effects and smooth animations
+- **Environment aware**: Automatically adapts URLs for localhost vs production
+- **Graceful fallbacks**: Handles empty product lists elegantly
+- **SEO friendly**: Proper semantic HTML structure
+
+</details>
