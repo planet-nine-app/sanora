@@ -1,6 +1,6 @@
 {
-  "privateKey": "be38ecf124952349588ac14eeebd09204252223564d25ff8d8477321007158d6",
-  "publicKey": "032b6fe9ac5cc745f0f34852d69e584f96f82d486160434923b3b0da5318255fdf",
-  "createdAt": "2025-08-09T06:25:45.899Z",
+  "privateKey": "e78af92f3dbf5cc762f1a854dd51e5a112eae515d43ff7929177a569204f0fb6",
+  "publicKey": "02d8bbfa19e4b2a0b1151bacb248db69418eaf6c96dbf55de81d536b00062d0922",
+  "createdAt": "2025-08-09T12:56:30.788Z",
   "purpose": "teleport-tag-signing"
 }

@@ -14,7 +14,7 @@ import addie from 'addie-js';
 import sessionless from 'sessionless-node';
 import fs from 'fs';
 import path from 'path';
-import { signTeleportTags } from './sign-teleport-tags.js';
+import { signTeleportTags, getOrCreateKeys } from './sign-teleport-tags.js';
 
 const MemoryStore = store(session);
 
@@ -22,6 +22,19 @@ const allowedTimeDifference = process.env.ALLOWED_TIME_DIFFERENCE || 600000;
 
 let keys = await db.getKeys();
 console.log(keys);
+
+// Sign teleport tags on startup and get base pubKey first
+console.log('🏷️ Signing teleport tags for content teleportation...');
+let basePubKey = null;
+try {
+  await signTeleportTags();
+  const teleportKeys = await getOrCreateKeys();
+  basePubKey = teleportKeys.publicKey;
+  console.log('✅ Teleport tags signed successfully');
+  console.log('🔑 Base pubKey for clients:', basePubKey);
+} catch (error) {
+  console.warn('⚠️ Failed to sign teleport tags:', error.message);
+}
 
 const SUBDOMAIN = process.env.SUBDOMAIN || 'dev';
 addie.baseURL = process.env.LOCALHOST ? 'http://127.0.0.1:3005/' : `https://${SUBDOMAIN}.addie.allyabase.com/`;
@@ -33,7 +46,7 @@ if(!keys) {
 
   keys = await db.getKeys();
   await sessionless.generateKeys(() => {}, db.getKeys);
-  await db.putUser({pubKey: keys.pubKey, addieUser});
+  await db.putUser({pubKey: keys.pubKey, addieUser, basePubKey});
 } else {
   try {
     addieUser = await db.getUserByPublicKey(keys.pubKey);
@@ -42,17 +55,22 @@ console.warn(err);
     addieUser = await addie.createUser(db.saveKeys, db.getKeys);
 console.log('updated addie user is: ', addieUser);
     await sessionless.generateKeys(() => {}, db.getKeys);
-    await db.putUser({pubKey: keys.pubKey, addieUser});
+    await db.putUser({pubKey: keys.pubKey, addieUser, basePubKey});
   }
 }
 
-// Sign teleport tags on startup
-console.log('🏷️ Signing teleport tags for content teleportation...');
-try {
-  await signTeleportTags();
-  console.log('✅ Teleport tags signed successfully');
-} catch (error) {
-  console.warn('⚠️ Failed to sign teleport tags:', error.message);
+// Update existing user with basePubKey if it's missing
+if (addieUser && keys && basePubKey) {
+  try {
+    const existingUser = await db.getUserByPublicKey(keys.pubKey);
+    if (existingUser && !existingUser.basePubKey) {
+      existingUser.basePubKey = basePubKey;
+      await db.saveUser(existingUser);
+      console.log('✅ Updated existing user with basePubKey');
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to update existing user with basePubKey:', error.message);
+  }
 }
 
 const app = express();
@@ -105,7 +123,7 @@ app.put('/user/create', async (req, res) => {
  
     const newAddieUser = await resp.json();
 
-    const foundUser = await db.putUser({ pubKey, addieUser: newAddieUser });
+    const foundUser = await db.putUser({ pubKey, addieUser: newAddieUser, basePubKey });
     res.send(foundUser);
   } catch(err) {
 console.warn(err);
@@ -126,6 +144,13 @@ app.get('/user/:uuid', async (req, res) => {
     if(!signature || !sessionless.verifySignature(signature, message, foundUser.pubKey)) {
       res.status(403);
       return res.send({error: 'auth error'});
+    }
+
+    // Add basePubKey to user if it's missing (for backwards compatibility)
+    if (!foundUser.basePubKey && basePubKey) {
+      foundUser.basePubKey = basePubKey;
+      // Save the updated user back to database
+      await db.saveUser(foundUser);
     }
 
     res.send(foundUser);

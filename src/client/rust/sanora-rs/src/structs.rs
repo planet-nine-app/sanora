@@ -32,7 +32,10 @@ pub struct SanoraUser {
     pub uuid: String,
     #[serde(rename = "addieUser")]
     #[serde(default)]
-    pub addie_user: AddieUser 
+    pub addie_user: AddieUser,
+    #[serde(rename = "basePubKey")]
+    #[serde(default)]
+    pub base_pub_key: String
 }
 
 impl Default for SanoraUser {
@@ -40,7 +43,8 @@ impl Default for SanoraUser {
         SanoraUser {
             pub_key: "".to_string(),
             uuid: "".to_string(),
-            addie_user: AddieUser::default()
+            addie_user: AddieUser::default(),
+            base_pub_key: "".to_string()
         }   
     }   
 }
