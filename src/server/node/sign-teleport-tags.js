@@ -43,7 +43,9 @@ function loadKeys() {
         const keyData = JSON.parse(readFileSync(keyFile, 'utf8'));
         return {
             privateKey: keyData.privateKey,
-            publicKey: keyData.publicKey
+            publicKey: keyData.publicKey,
+            // Return the full structure for sessionless compatibility
+            pubKey: keyData.publicKey
         };
     } catch (error) {
         console.warn('⚠️ Failed to load keys:', error.message);
@@ -58,11 +60,13 @@ async function getOrCreateKeys() {
     const existingKeys = loadKeys();
     if (existingKeys) {
         console.log('📄 Loading existing keys from', keyFile);
-        const keys = await sessionless.generateKeys(saveKeys, loadKeys);
+        // Configure sessionless with existing keys
+        sessionless.getKeys = () => existingKeys;
+        
         return {
-            keys: keys,
+            keys: existingKeys,
             privateKey: existingKeys.privateKey,
-            publicKey: existingKeys.publicKey || keys.pubKey
+            publicKey: existingKeys.publicKey
         };
     }
 

@@ -23,17 +23,18 @@ const allowedTimeDifference = process.env.ALLOWED_TIME_DIFFERENCE || 600000;
 let keys = await db.getKeys();
 console.log(keys);
 
-// Sign teleport tags on startup and get base pubKey first
-console.log('🏷️ Signing teleport tags for content teleportation...');
+// Use Sanora's main keys for teleportation consistency
+console.log('🏷️ Setting up teleportation using main Sanora keys...');
 let basePubKey = null;
 try {
-  await signTeleportTags();
-  const teleportKeys = await getOrCreateKeys();
-  basePubKey = teleportKeys.publicKey;
-  console.log('✅ Teleport tags signed successfully');
+  // Use the main Sanora keys for teleportation to ensure consistency
+  basePubKey = keys.pubKey;
   console.log('🔑 Base pubKey for clients:', basePubKey);
+  
+  // Configure the teleport signing to use the main keys instead
+  console.log('✅ Teleportation configured with main keys');
 } catch (error) {
-  console.warn('⚠️ Failed to sign teleport tags:', error.message);
+  console.warn('⚠️ Failed to setup teleportation:', error.message);
 }
 
 const SUBDOMAIN = process.env.SUBDOMAIN || 'dev';
@@ -59,14 +60,15 @@ console.log('updated addie user is: ', addieUser);
   }
 }
 
-// Update existing user with basePubKey if it's missing
+// Update existing user with basePubKey (always update to ensure consistency)
 if (addieUser && keys && basePubKey) {
   try {
     const existingUser = await db.getUserByPublicKey(keys.pubKey);
-    if (existingUser && !existingUser.basePubKey) {
+    if (existingUser) {
+      // Always update basePubKey to ensure consistency with teleport keys
       existingUser.basePubKey = basePubKey;
       await db.saveUser(existingUser);
-      console.log('✅ Updated existing user with basePubKey');
+      console.log('✅ Updated existing user with current basePubKey:', basePubKey);
     }
   } catch (error) {
     console.warn('⚠️ Failed to update existing user with basePubKey:', error.message);
@@ -761,11 +763,11 @@ app.get('/teleportable-products', async (req, res) => {
     
     if (basePubKey) {
       try {
-        const teleportKeys = await getOrCreateKeys();
         const timestamp = Date.now().toString();
         message = `${timestamp}:planet-nine-marketplace-products:teleport`;
-        signature = await sessionless.sign(message, teleportKeys);
-        pubKey = teleportKeys.publicKey;
+        // Use main Sanora keys for signing teleport tags
+        signature = await sessionless.sign(message);
+        pubKey = basePubKey;
       } catch (err) {
         console.warn('Failed to sign teleport tag:', err);
       }
