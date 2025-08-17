@@ -23,19 +23,8 @@ const allowedTimeDifference = process.env.ALLOWED_TIME_DIFFERENCE || 600000;
 let keys = await db.getKeys();
 console.log(keys);
 
-// Use Sanora's main keys for teleportation consistency
-console.log('🏷️ Setting up teleportation using main Sanora keys...');
+// Will set basePubKey after keys are created/loaded
 let basePubKey = null;
-try {
-  // Use the main Sanora keys for teleportation to ensure consistency
-  basePubKey = keys.pubKey;
-  console.log('🔑 Base pubKey for clients:', basePubKey);
-  
-  // Configure the teleport signing to use the main keys instead
-  console.log('✅ Teleportation configured with main keys');
-} catch (error) {
-  console.warn('⚠️ Failed to setup teleportation:', error.message);
-}
 
 const SUBDOMAIN = process.env.SUBDOMAIN || 'dev';
 addie.baseURL = process.env.LOCALHOST ? 'http://127.0.0.1:3005/' : `https://${SUBDOMAIN}.addie.allyabase.com/`;
@@ -47,8 +36,17 @@ if(!keys) {
 
   keys = await db.getKeys();
   await sessionless.generateKeys(() => {}, db.getKeys);
+  
+  // Set basePubKey after keys are generated
+  basePubKey = keys.pubKey;
+  console.log('🔑 Base pubKey for new user:', basePubKey);
+  
   await db.putUser({pubKey: keys.pubKey, addieUser, basePubKey});
 } else {
+  // Set basePubKey from existing keys
+  basePubKey = keys.pubKey;
+  console.log('🔑 Base pubKey from existing keys:', basePubKey);
+  
   try {
     addieUser = await db.getUserByPublicKey(keys.pubKey);
   } catch(err) {

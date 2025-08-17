@@ -1,0 +1,158 @@
+/* Form Widget Styles */
+
+/* DateTime Widget Styles */
+.datetime-section {
+    background: #2a2a2e;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.datetime-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.datetime-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.datetime-label {
+    color: #bbbbbb;
+    font-size: 12px;
+    margin-bottom: 5px;
+    font-family: Arial, sans-serif;
+}
+
+.time-input {
+    background: #1c1c20;
+    border: 2px solid #444;
+    border-radius: 6px;
+    color: white;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: purple;
+}
+
+.time-input-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.time-input-field {
+    flex: 1;
+}
+
+.ampm-selector {
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ampm-btn {
+    background: #444;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    transition: background-color 0.2s;
+}
+
+.ampm-btn:hover {
+    background: #555;
+}
+
+.ampm-btn.active {
+    background: purple;
+}
+
+.add-event-btn {
+    background: linear-gradient(90deg, green, purple);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.add-event-btn:hover {
+    opacity: 0.9;
+}
+
+.add-event-btn.visible {
+    opacity: 1;
+}
+
+/* Event Display Styles */
+.event-item {
+    background: #444;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 8px 0;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+/* Image Upload Styles */
+.image-upload-container {
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.image-upload-container:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Form Widget State Classes */
+.has-value {
+    /* Class for inputs that have values */
+}
+
+.complete {
+    /* Class for completed sections */
+}
+
+/* Input Field Styles (used by SVG foreignObject inputs) */
+.input-field {
+    transition: stroke 0.2s ease;
+}
+
+.image-dropzone {
+    transition: stroke 0.2s ease, stroke-dasharray 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .datetime-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .datetime-section {
+        padding: 10px;
+    }
+    
+    .time-input-container {
+        gap: 5px;
+    }
+    
+    .ampm-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+}

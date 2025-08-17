@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Nine Products - Teleportable Feed</title>
+</head>
+<body>
+    <!-- Teleportable Product Feed -->
+    <teleport id="planet-nine-products" type="feed" category="marketplace" signature="4af3f2de10e0c251676677cf425d0f926c2590770eff5e9e8eab962502cecfd12445323da7044765252d95a0ca2700d5d351d82d49b698bfc567006ecf5a9902" message="1754771203948:planet-nine-marketplace-products:teleport" pubKey="0328c47d5dae5d659682abb21deb5803f7836868a487eb7d70c84f171054bdfd65">
+        <feed-meta>
+            <title>Planet Nine Marketplace</title>
+            <description>Discover unique products from the Planet Nine ecosystem</description>
+            <last-updated></last-updated>
+            <source-url></source-url>
+        </feed-meta>
+        <!-- Products will be dynamically inserted here -->
+    </teleport>
+
+    <!-- Vertical Scrolling Product Display -->
+    <div style="
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    ">
+        <div style="
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        ">
+            <h1 style="font-size: 2.5em; margin-bottom: 10px;">🌌 Planet Nine Products</h1>
+            <p style="font-size: 1.1em; opacity: 0.95;">Teleportable Product Feed</p>
+        </div>
+
+        <div id="products-container" style="
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        ">
+            <!-- Products will be loaded here -->
+        </div>
+
+        <div id="loading" style="
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 1.2em;
+        ">
+            Loading products...
+        </div>
+    </div>
+
+    <script>
+        // Fetch products from sanora endpoint
+        async function loadProducts() {
+            try {
+                // Determine base URL - adjust for your environment
+                const baseUrl = window.location.hostname === 'localhost' 
+                    ? 'http://127.0.0.1:7243'
+                    : `https://${window.location.hostname}`;
+                
+                const response = await fetch(`${baseUrl}/products/base`);
+                const productsData = await response.json();
+                
+                const container = document.getElementById('products-container');
+                const loadingDiv = document.getElementById('loading');
+                const teleportFeed = document.querySelector('teleport');
+                const feedMeta = teleportFeed.querySelector('feed-meta');
+                
+                // Update feed metadata
+                const lastUpdated = feedMeta.querySelector('last-updated');
+                const sourceUrl = feedMeta.querySelector('source-url');
+                lastUpdated.textContent = new Date().toISOString();
+                sourceUrl.textContent = window.location.href;
+                
+                if (!productsData || Object.keys(productsData).length === 0) {
+                    loadingDiv.innerHTML = '📦 No products available yet';
+                    return;
+                }
+                
+                loadingDiv.style.display = 'none';
+                
+                // Process each user's products
+                Object.values(productsData).forEach(userProducts => {
+                    Object.values(userProducts).forEach(product => {
+                        // Create teleportal element for feed
+                        const teleportal = createTeleportal(product);
+                        teleportFeed.appendChild(teleportal);
+                        
+                        // Create visual product card
+                        const card = createProductCard(product);
+                        container.appendChild(card);
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Failed to load products:', error);
+                document.getElementById('loading').innerHTML = '❌ Failed to load products';
+            }
+        }
+        
+        function createTeleportal(product) {
+            const teleportal = document.createElement('teleportal');
+            teleportal.id = product.productId || `product-${Date.now()}`;
+            teleportal.setAttribute('category', product.category || 'general');
+            teleportal.setAttribute('price', product.price || '0');
+            teleportal.setAttribute('currency', product.currency || 'USD');
+            
+            // Add title element
+            const title = document.createElement('title');
+            title.textContent = product.title || 'Untitled Product';
+            teleportal.appendChild(title);
+            
+            // Add description element
+            const description = document.createElement('description');
+            description.textContent = product.description || 'No description available';
+            teleportal.appendChild(description);
+            
+            // Add URL element
+            const url = document.createElement('url');
+            const baseUrl = window.location.hostname === 'localhost' 
+                ? 'http://127.0.0.1:7243'
+                : `https://${window.location.hostname}`;
+            url.textContent = `${baseUrl}/products/${product.uuid}/${encodeURIComponent(product.title)}`;
+            teleportal.appendChild(url);
+            
+            // Add image URL if available
+            const imageUrl = document.createElement('image');
+            imageUrl.textContent = product.image 
+                ? `${baseUrl}/images/${product.image}`
+                : '';
+            teleportal.appendChild(imageUrl);
+            
+            // Add tags
+            const tags = document.createElement('tags');
+            tags.textContent = product.tags || 'product,marketplace';
+            teleportal.appendChild(tags);
+            
+            // Add stock status
+            const inStock = document.createElement('in-stock');
+            inStock.textContent = 'true';
+            teleportal.appendChild(inStock);
+            
+            // Add rating if available
+            const rating = document.createElement('rating');
+            rating.textContent = product.rating || '0';
+            teleportal.appendChild(rating);
+            
+            return teleportal;
+        }
+        
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                cursor: pointer;
+            `;
+            
+            // Add hover effect
+            card.onmouseover = () => {
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
+            };
+            card.onmouseout = () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+            };
+            
+            // Image or placeholder
+            const imageSection = document.createElement('div');
+            imageSection.style.cssText = `
+                height: 200px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 3em;
+            `;
+            
+            if (product.image) {
+                const baseUrl = window.location.hostname === 'localhost' 
+                    ? 'http://127.0.0.1:7243'
+                    : `https://${window.location.hostname}`;
+                imageSection.style.background = `url(${baseUrl}/images/${product.image}) center/cover`;
+            } else {
+                imageSection.innerHTML = '📦';
+            }
+            
+            card.appendChild(imageSection);
+            
+            // Content section
+            const content = document.createElement('div');
+            content.style.cssText = 'padding: 20px;';
+            
+            // Title
+            const title = document.createElement('h3');
+            title.style.cssText = `
+                font-size: 1.4em;
+                margin-bottom: 10px;
+                color: #2c3e50;
+            `;
+            title.textContent = product.title || 'Untitled Product';
+            content.appendChild(title);
+            
+            // Description
+            const description = document.createElement('p');
+            description.style.cssText = `
+                color: #7f8c8d;
+                line-height: 1.5;
+                margin-bottom: 15px;
+            `;
+            description.textContent = product.description || 'No description available';
+            content.appendChild(description);
+            
+            // Price
+            const price = document.createElement('div');
+            price.style.cssText = `
+                font-size: 1.5em;
+                font-weight: bold;
+                color: #27ae60;
+                margin-bottom: 15px;
+            `;
+            price.textContent = product.price ? `$${product.price}` : 'Free';
+            content.appendChild(price);
+            
+            // View button
+            const button = document.createElement('button');
+            button.style.cssText = `
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 25px;
+                font-size: 1em;
+                font-weight: bold;
+                cursor: pointer;
+                width: 100%;
+                transition: opacity 0.3s ease;
+            `;
+            button.textContent = 'View Product';
+            button.onmouseover = () => button.style.opacity = '0.9';
+            button.onmouseout = () => button.style.opacity = '1';
+            button.onclick = () => {
+                const baseUrl = window.location.hostname === 'localhost' 
+                    ? 'http://127.0.0.1:7243'
+                    : `https://${window.location.hostname}`;
+                window.open(`${baseUrl}/products/${product.uuid}/${encodeURIComponent(product.title)}`, '_blank');
+            };
+            content.appendChild(button);
+            
+            card.appendChild(content);
+            
+            return card;
+        }
+        
+        // Load products when page loads
+        window.addEventListener('DOMContentLoaded', loadProducts);
+    </script>
+</body>
+</html>

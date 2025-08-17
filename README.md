@@ -283,64 +283,130 @@ Returns an array of all product objects from all users on this base:
 </details>
 
 <details>
- <summary><code>GET</code> <code><b>/teleportable-products</b></code> <code>Returns teleportable product feed pages for embedding in other websites</code></summary>
+ <summary><code>GET</code> <code><b>/teleportable-products</b></code> <code>Returns teleportable product feed for cross-base marketplace discovery via BDO teleportation</code></summary>
 
 ##### Parameters
 
-> | name         |  required     | data type               | description                                                           |
-> |--------------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | layout       |  false    | string                  | Layout type: "vertical-scrolling-stack" (default) or "horizontal-scrolling-stack" |
-
-##### Supported Layouts
-
-**Vertical Scrolling Stack** (default):
-- Products displayed in a single vertical column
-- Centered layout with max width of 600px
-- Natural vertical scrolling behavior
-- Perfect for narrow embedding spaces
-
-**Horizontal Scrolling Stack**:
-- Products displayed in a horizontal carousel
-- Interactive scroll buttons and smooth scrolling
-- Fixed card width for consistent presentation
-- Great for showcasing products in banner format
+None required - this endpoint dynamically generates teleportable content with all products from the base.
 
 ##### Responses
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
 > | `200`         | `text/html`                       | HTML page with embedded teleportable product feed   |
-> | `404`         | `text/plain`                      | `Not found`                            |
+> | `500`         | `text/plain`                      | `Error generating product feed`                            |
 
 ##### Example URLs
 
 > ```bash
-> # Vertical layout (default)
+> # Get teleportable products
 > https://dev.sanora.allyabase.com/teleportable-products
-> 
-> # Vertical layout (explicit)
-> https://dev.sanora.allyabase.com/teleportable-products?layout=vertical-scrolling-stack
-> 
-> # Horizontal layout
-> https://dev.sanora.allyabase.com/teleportable-products?layout=horizontal-scrolling-stack
 > ```
 
-##### Teleportation Protocol
+##### Teleportation Protocol Implementation
 
-These pages include proper `<teleport>` and `<teleportal>` tags that comply with the Planet Nine teleportation protocol, allowing other websites to:
+This endpoint generates a complete teleportable product feed that works with the Planet Nine teleportation system through BDO. The response includes:
 
-- Parse and extract product information
-- Embed product feeds dynamically  
-- Create cross-site product discovery
-- Build decentralized marketplace experiences
+1. **Teleport Tag with Signature**: A cryptographically signed `<teleport>` tag containing feed metadata
+2. **Teleportal Elements**: Individual `<teleportal>` elements for each product with structured data
+3. **Visual HTML Display**: Inline-styled product cards for direct viewing
+4. **No JavaScript**: Pure HTML with inline CSS to ensure compatibility with teleportation
+
+##### How Teleportation Works
+
+The complete teleportation workflow involves three services working together:
+
+1. **Sanora (Content Provider)**:
+   - Generates teleportable HTML with signed `<teleport>` tags
+   - Uses sessionless authentication to sign content with its base public key
+   - Embeds products as `<teleportal>` elements with structured data
+   - Stores the base public key (`basePubKey`) in user objects for client verification
+
+2. **BDO (Teleportation Service)**:
+   - Validates teleport signatures using the provided public key
+   - Fetches content from remote URLs (supports `allyabase://` protocol for container networking)
+   - Returns validated content with `valid: true` flag when signatures match
+   - Handles cross-container communication in Docker environments
+
+3. **Client Applications (e.g., Ninefy)**:
+   - Request teleportation through BDO using the base's public key
+   - Parse returned HTML to extract `<teleportal>` elements
+   - Convert teleportal data into product objects for display
+   - Show teleported content in dedicated UI sections
+
+##### Teleport Tag Structure
+
+```html
+<teleport id="planet-nine-products" 
+          type="feed" 
+          category="marketplace" 
+          signature="[sessionless_signature]" 
+          message="[timestamp]:planet-nine-marketplace-products:teleport" 
+          pubKey="[base_public_key]">
+    <feed-meta>
+        <title>Planet Nine Marketplace</title>
+        <description>Discover unique products from the Planet Nine ecosystem</description>
+        <last-updated>[ISO_timestamp]</last-updated>
+        <source-url>[base_url]/teleportable-products</source-url>
+    </feed-meta>
+    
+    <teleportal id="[product_id]" category="[category]" price="[cents]" currency="USD">
+        <title>[Product Title]</title>
+        <description>[Product Description]</description>
+        <url>[product_url]</url>
+        <image>[image_url]</image>
+        <tags>[comma,separated,tags]</tags>
+        <in-stock>true</in-stock>
+        <rating>[0-5]</rating>
+    </teleportal>
+    <!-- More teleportal elements... -->
+</teleport>
+```
+
+##### Container Networking with allyabase:// Protocol
+
+For Docker container environments, the teleportation system supports the `allyabase://` protocol to handle container-to-container communication:
+
+- **Client sends**: `allyabase://sanora/teleportable-products?pubKey=[key]`
+- **BDO translates**: `allyabase://sanora` → `http://127.0.0.1:7243` (internal container port)
+- **Enables**: Seamless teleportation across containerized services
+
+##### Security & Authentication
+
+- **Sessionless Signatures**: All teleport tags are signed using secp256k1 cryptographic keys
+- **Public Key Verification**: BDO verifies signatures match the provided public key
+- **Timestamp Protection**: Messages include timestamps to prevent replay attacks
+- **Base Identity**: Each Sanora instance has a unique `basePubKey` for identification
+
+##### Integration Example
+
+```javascript
+// Client-side teleportation request (from Ninefy)
+const teleportUrl = `allyabase://sanora/teleportable-products?pubKey=${basePubKey}`;
+const teleportedData = await bdoClient.teleport(uuid, hash, teleportUrl);
+
+if (teleportedData.valid) {
+  // Parse HTML and extract products
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(teleportedData.html, 'text/html');
+  const teleportals = doc.querySelectorAll('teleportal');
+  
+  // Convert to product objects
+  const products = Array.from(teleportals).map(portal => ({
+    id: portal.getAttribute('id'),
+    title: portal.querySelector('title')?.textContent,
+    price: parseInt(portal.getAttribute('price')),
+    // ... more fields
+  }));
+}
+```
 
 ##### Features
 
-- **JavaScript-free teleport tags**: All styling uses inline CSS for maximum compatibility
-- **Responsive design**: Works on desktop and mobile devices
-- **Visual feedback**: Hover effects and smooth animations
-- **Environment aware**: Automatically adapts URLs for localhost vs production
-- **Graceful fallbacks**: Handles empty product lists elegantly
-- **SEO friendly**: Proper semantic HTML structure
+- **Dynamic Content Generation**: Products fetched from database and embedded in real-time
+- **JavaScript-free Teleport Tags**: All styling uses inline CSS for maximum compatibility
+- **Cross-Base Discovery**: Enables marketplace aggregation across Planet Nine network
+- **Graceful Degradation**: Works even when some products lack complete data
+- **Visual + Data**: Provides both human-readable display and machine-parseable data
 
 </details>

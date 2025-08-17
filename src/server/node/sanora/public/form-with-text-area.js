@@ -1,0 +1,556 @@
+(function(window) {
+      'use strict';
+
+      // Global state for date/time events
+      window.dateTimes = [];
+      let eventCounter = 0;
+
+      // Utility functions for date/time handling
+      function formatDateInput(value) {
+        // Remove all non-numeric characters
+        const numbers = value.replace(/\D/g, '');
+        
+        // Add slashes as user types
+        if (numbers.length >= 2) {
+          return numbers.slice(0, 2) + '/' + 
+                 (numbers.length >= 4 ? numbers.slice(2, 4) + '/' + numbers.slice(4, 8) : numbers.slice(2));
+        }
+        return numbers;
+      }
+
+      function formatTimeInput(value) {
+        // Remove all non-numeric characters
+        const numbers = value.replace(/\D/g, '');
+        
+        // Add colon as user types
+        if (numbers.length >= 2) {
+          return numbers.slice(0, 2) + ':' + numbers.slice(2, 4);
+        }
+        return numbers;
+      }
+
+      function parseDate(dateStr) {
+        if (!dateStr || dateStr.length < 8) return null;
+        const parts = dateStr.split('/');
+        if (parts.length !== 3) return null;
+        
+        const month = parseInt(parts[0]) - 1; // JS months are 0-indexed
+        const day = parseInt(parts[1]);
+        const year = parseInt(parts[2]);
+        
+        return new Date(year, month, day);
+      }
+
+      function parseTime(timeStr, ampm) {
+        if (!timeStr || timeStr.length < 4) return { hours: 0, minutes: 0 };
+        const parts = timeStr.split(':');
+        if (parts.length !== 2) return { hours: 0, minutes: 0 };
+        
+        let hours = parseInt(parts[0]);
+        const minutes = parseInt(parts[1]);
+        
+        if (ampm === 'PM' && hours !== 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        
+        return { hours, minutes };
+      }
+
+      function addHours(date, hours) {
+        const newDate = new Date(date);
+        newDate.setHours(newDate.getHours() + hours);
+        return newDate;
+      }
+
+      function formatDisplayTime(date) {
+        return date.toLocaleString('en-US', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      }
+
+      function createDateTimeSection(containerId, isFirst = false) {
+        const sectionId = `datetime-section-${eventCounter++}`;
+        const section = document.createElement('div');
+        section.className = 'datetime-section';
+        section.id = sectionId;
+        
+        section.innerHTML = `
+          <div class="datetime-grid">
+            <div class="datetime-field">
+              <label class="datetime-label">Start Date</label>
+              <input type="text" class="time-input date-input" placeholder="MM/DD/YYYY" maxlength="10" data-field="startDate">
+            </div>
+            <div class="datetime-field">
+              <label class="datetime-label">Start Time</label>
+              <div class="time-input-container">
+                <input type="text" class="time-input time-input-field" placeholder="HH:MM" maxlength="5" data-field="startTime">
+                <div class="ampm-selector">
+                  <button type="button" class="ampm-btn active" data-ampm="AM">AM</button>
+                  <button type="button" class="ampm-btn" data-ampm="PM">PM</button>
+                </div>
+              </div>
+            </div>
+            <div class="datetime-field">
+              <label class="datetime-label">End Date</label>
+              <input type="text" class="time-input date-input" placeholder="MM/DD/YYYY" maxlength="10" data-field="endDate">
+            </div>
+            <div class="datetime-field">
+              <label class="datetime-label">End Time</label>
+              <div class="time-input-container">
+                <input type="text" class="time-input time-input-field" placeholder="HH:MM" maxlength="5" data-field="endTime">
+                <div class="ampm-selector">
+                  <button type="button" class="ampm-btn active" data-ampm="AM">AM</button>
+                  <button type="button" class="ampm-btn" data-ampm="PM">PM</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="add-event-btn">Add Event</button>
+        `;
+
+        // Add event handlers
+        setupDateTimeHandlers(section);
+        
+        const container = document.getElementById(containerId);
+        container.appendChild(section);
+        
+        return sectionId;
+      }
+
+      function setupDateTimeHandlers(section) {
+        const inputs = section.querySelectorAll('.time-input');
+        const addBtn = section.querySelector('.add-event-btn');
+        
+        // Date input formatting
+        section.querySelectorAll('.date-input').forEach(input => {
+          input.addEventListener('input', function(e) {
+            const formatted = formatDateInput(e.target.value);
+            e.target.value = formatted;
+            updateInputState(e.target);
+            handleDateLogic(section);
+            checkSectionComplete(section);
+          });
+          
+          // Mobile: use numeric keyboard
+          if ('ontouchstart' in window) {
+            input.setAttribute('inputmode', 'numeric');
+            input.setAttribute('pattern', '[0-9]*');
+          }
+        });
+
+        // Time input formatting
+        section.querySelectorAll('.time-input-field').forEach(input => {
+          input.addEventListener('input', function(e) {
+            const formatted = formatTimeInput(e.target.value);
+            e.target.value = formatted;
+            updateInputState(e.target);
+            handleTimeLogic(section);
+            checkSectionComplete(section);
+          });
+          
+          // Mobile: use numeric keyboard
+          if ('ontouchstart' in window) {
+            input.setAttribute('inputmode', 'numeric');
+            input.setAttribute('pattern', '[0-9]*');
+          }
+          
+          // Handle A/P key presses for AM/PM
+          input.addEventListener('keydown', function(e) {
+            const container = e.target.closest('.time-input-container');
+            const ampmBtns = container.querySelectorAll('.ampm-btn');
+            
+            if (e.key.toLowerCase() === 'a') {
+              e.preventDefault();
+              ampmBtns.forEach(btn => btn.classList.remove('active'));
+              container.querySelector('[data-ampm="AM"]').classList.add('active');
+              checkSectionComplete(section);
+            } else if (e.key.toLowerCase() === 'p') {
+              e.preventDefault();
+              ampmBtns.forEach(btn => btn.classList.remove('active'));
+              container.querySelector('[data-ampm="PM"]').classList.add('active');
+              checkSectionComplete(section);
+            }
+          });
+        });
+
+        // AM/PM button handlers
+        section.querySelectorAll('.ampm-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const container = this.closest('.time-input-container');
+            container.querySelectorAll('.ampm-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            checkSectionComplete(section);
+          });
+        });
+
+        // Add event button
+        addBtn.addEventListener('click', function() {
+          const eventData = collectEventData(section);
+          if (eventData) {
+            window.dateTimes.push(eventData);
+            updateEventsDisplay();
+            createDateTimeSection('datetime-container');
+          }
+        });
+      }
+
+      function updateInputState(input) {
+        if (input.value.trim()) {
+          input.classList.add('has-value');
+        } else {
+          input.classList.remove('has-value');
+        }
+      }
+
+      function handleDateLogic(section) {
+        const startDateInput = section.querySelector('[data-field="startDate"]');
+        const endDateInput = section.querySelector('[data-field="endDate"]');
+        
+        // If start date is filled and end date is empty, copy start date to end date
+        if (startDateInput.value.length === 10 && !endDateInput.value) {
+          endDateInput.value = startDateInput.value;
+          updateInputState(endDateInput);
+        }
+      }
+
+      function handleTimeLogic(section) {
+        const startTimeInput = section.querySelector('[data-field="startTime"]');
+        const endTimeInput = section.querySelector('[data-field="endTime"]');
+        const startDateInput = section.querySelector('[data-field="startDate"]');
+        const endDateInput = section.querySelector('[data-field="endDate"]');
+        
+        // If start time is filled and end time is empty, set end time to 2 hours later
+        if (startTimeInput.value.length === 5 && !endTimeInput.value && startDateInput.value.length === 10) {
+          const startDate = parseDate(startDateInput.value);
+          if (startDate) {
+            const startAmPm = section.querySelector('[data-field="startTime"]').closest('.time-input-container').querySelector('.ampm-btn.active').dataset.ampm;
+            const startTimeObj = parseTime(startTimeInput.value, startAmPm);
+            
+            startDate.setHours(startTimeObj.hours, startTimeObj.minutes);
+            const endDateTime = addHours(startDate, 2);
+            
+            // Update end date if it changed
+            const endDateStr = `${String(endDateTime.getMonth() + 1).padStart(2, '0')}/${String(endDateTime.getDate()).padStart(2, '0')}/${endDateTime.getFullYear()}`;
+            if (endDateInput.value !== endDateStr) {
+              endDateInput.value = endDateStr;
+              updateInputState(endDateInput);
+            }
+            
+            // Set end time
+            const endHours = endDateTime.getHours();
+            const endMinutes = endDateTime.getMinutes();
+            const endAmPm = endHours >= 12 ? 'PM' : 'AM';
+            const displayHours = endHours === 0 ? 12 : (endHours > 12 ? endHours - 12 : endHours);
+            
+            endTimeInput.value = `${String(displayHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+            updateInputState(endTimeInput);
+            
+            // Set AM/PM
+            const endAmPmContainer = endTimeInput.closest('.time-input-container');
+            endAmPmContainer.querySelectorAll('.ampm-btn').forEach(btn => btn.classList.remove('active'));
+            endAmPmContainer.querySelector(`[data-ampm="${endAmPm}"]`).classList.add('active');
+          }
+        }
+      }
+
+      function checkSectionComplete(section) {
+        const inputs = section.querySelectorAll('.time-input');
+        const allFilled = Array.from(inputs).every(input => input.value.trim());
+        const addBtn = section.querySelector('.add-event-btn');
+        
+        if (allFilled) {
+          section.classList.add('complete');
+          addBtn.classList.add('visible');
+        } else {
+          section.classList.remove('complete');
+          addBtn.classList.remove('visible');
+        }
+      }
+
+      function collectEventData(section) {
+        const startDateInput = section.querySelector('[data-field="startDate"]');
+        const endDateInput = section.querySelector('[data-field="endDate"]');
+        const startTimeInput = section.querySelector('[data-field="startTime"]');
+        const endTimeInput = section.querySelector('[data-field="endTime"]');
+        
+        const startAmPm = startTimeInput.closest('.time-input-container').querySelector('.ampm-btn.active').dataset.ampm;
+        const endAmPm = endTimeInput.closest('.time-input-container').querySelector('.ampm-btn.active').dataset.ampm;
+        
+        const startDate = parseDate(startDateInput.value);
+        const endDate = parseDate(endDateInput.value);
+        
+        if (!startDate || !endDate) return null;
+        
+        const startTime = parseTime(startTimeInput.value, startAmPm);
+        const endTime = parseTime(endTimeInput.value, endAmPm);
+        
+        startDate.setHours(startTime.hours, startTime.minutes);
+        endDate.setHours(endTime.hours, endTime.minutes);
+        
+        return {
+          startTime: startDate.getTime(),
+          endTime: endDate.getTime()
+        };
+      }
+
+      function updateEventsDisplay() {
+        const summaryDiv = document.getElementById('events-summary');
+        const listDiv = document.getElementById('events-list');
+        
+        if (window.dateTimes.length === 0) {
+          summaryDiv.style.display = 'none';
+          return;
+        }
+        
+        summaryDiv.style.display = 'block';
+        listDiv.innerHTML = window.dateTimes.map((event, index) => `
+          <div class="event-item">
+            <strong>Event ${index + 1}:</strong><br>
+            ${formatDisplayTime(new Date(event.startTime))} → ${formatDisplayTime(new Date(event.endTime))}
+          </div>
+        `).join('');
+      }
+
+      // Traditional form functions (original widget)
+      function calculateTextBlockHeight(text, width = 340, fontSize = 14, lineHeight = 1.4) {
+        const temp = document.createElement('div');
+        temp.style.position = 'absolute';
+        temp.style.visibility = 'hidden';
+        temp.style.width = `${width}px`;
+        temp.style.fontSize = `${fontSize}px`;
+        temp.style.lineHeight = `${lineHeight}`;
+        temp.style.fontFamily = 'Arial, sans-serif';
+        temp.style.padding = '12px';
+        temp.innerHTML = text;
+        
+        document.body.appendChild(temp);
+        const height = temp.offsetHeight;
+        document.body.removeChild(temp);
+        
+        return height;
+      }
+
+      function calculateTextAreaHeight(charLimit = 500) {
+        // Calculate height based on character limit
+        // Roughly 80 characters per line, 20px per line, with padding
+        const estimatedLines = Math.max(3, Math.ceil(charLimit / 80));
+        return Math.min(estimatedLines * 20 + 40, 120); // Cap at 120px for UI
+      }
+
+      function calculateFormHeight(formConfig) {
+        const fields = Object.keys(formConfig).filter(key => key !== 'form');
+        const headerHeight = 85;           
+        const standardFieldHeight = 70;
+        const submitButtonHeight = 45;     
+        const bottomPadding = 30;
+        
+        let totalHeight = headerHeight;
+        
+        fields.forEach(key => {
+          const fieldConfig = formConfig[key];
+          
+          if (fieldConfig.type === 'text-block') {
+            const textHeight = calculateTextBlockHeight(fieldConfig.content || fieldConfig.text);
+            totalHeight += textHeight + 20;
+          } else if (fieldConfig.type === 'datetime') {
+            totalHeight += 200; // Approximate height for datetime widget
+          } else if (fieldConfig.type === 'textarea') {
+            const charLimit = fieldConfig.charLimit || 500;
+            const textareaHeight = calculateTextAreaHeight(charLimit);
+            totalHeight += textareaHeight + 50; // Label + textarea + padding
+          } else {
+            totalHeight += standardFieldHeight;
+          }
+        });
+        
+        return totalHeight + submitButtonHeight + bottomPadding;
+      }
+
+      function getBackgroundAndGradients(formConfig) {
+        const dynamicHeight = calculateFormHeight(formConfig);
+
+        return `<rect width="500" height="${dynamicHeight}" fill="transparent"/>
+        
+        <!-- Form Container with Metallic Background -->
+        <linearGradient id="metallicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2a2a2e"/>
+          <stop offset="50%" stop-color="#323236"/>
+          <stop offset="100%" stop-color="#2a2a2e"/>
+        </linearGradient>
+        <rect x="50" y="50" width="400" height="${dynamicHeight}" rx="15" fill="url(#metallicBackground)" 
+          stroke="#444" stroke-width="1"/>
+        
+        <!-- Subtle Metallic Highlight -->
+        <line x1="51" y1="52" x2="449" y2="52" stroke="#555" stroke-width="1" opacity="0.5"/>
+        
+        <!-- Form Header -->
+        <text x="250" y="85" font-family="Arial, sans-serif" font-size="24" font-weight="bold" 
+          fill="#ffffff" text-anchor="middle">DEMO FORM</text>
+        
+        <!-- Define the gradient for active input borders -->
+        <linearGradient id="inputGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="purple"/>
+          <stop offset="100%" stop-color="green"/>
+        </linearGradient>
+        
+        <!-- Button Gradient -->
+        <linearGradient id="buttonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop id="submitButtonGradientStart" offset="0%" stop-color="green"/>
+          <stop id="submitButtonGradientEnd" offset="100%" stop-color="purple"/>
+        </linearGradient>`;
+      }
+
+      function getInput(x, y, text, inputType) {
+        const borderId = `${text.replace(/\s+/g, '')}Border`;
+        const inputId = `${text.replace(/\s+/g, '')}Input`;
+
+        return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+          <!-- Field Background -->
+          <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="40" rx="8" fill="#1c1c20" 
+                stroke="#444" stroke-width="2" class="input-field"/>
+          <!-- HTML Input Field -->
+          <foreignObject x="${x + 5}" y="${y + 15}" width="330" height="30">
+            <input xmlns="http://www.w3.org/1999/xhtml" id="${inputId}" type="text" placeholder="Enter ${text.toLowerCase()}" data-field="${text}" spellcheck="false" style="width:100%; height: 100%; background-color: transparent; color: white; border: none; outline: none; padding: 8px 12px; font-size: 14px; font-family: Arial, sans-serif; border-radius: 6px;"/>
+          </foreignObject>`;
+      }
+
+      function getTextArea(x, y, text, fieldConfig) {
+        const borderId = `${text.replace(/\s+/g, '')}Border`;
+        const textareaId = `${text.replace(/\s+/g, '')}Textarea`;
+        const counterId = `${text.replace(/\s+/g, '')}Counter`;
+        const charLimit = fieldConfig.charLimit || 500;
+        const textareaHeight = calculateTextAreaHeight(charLimit);
+
+        return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+          <!-- Character Counter -->
+          <text x="${x + 340}" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#888" text-anchor="end" id="${counterId}">0/${charLimit}</text>
+          <!-- TextArea Background -->
+          <rect id="${borderId}" x="${x}" y="${y + 10}" width="340" height="${textareaHeight}" rx="8" fill="#1c1c20" 
+                stroke="#444" stroke-width="2" class="input-field"/>
+          <!-- HTML TextArea Field -->
+          <foreignObject x="${x + 5}" y="${y + 15}" width="330" height="${textareaHeight - 10}">
+            <textarea xmlns="http://www.w3.org/1999/xhtml" id="${textareaId}" placeholder="Enter ${text.toLowerCase()}" data-field="${text}" maxlength="${charLimit}" spellcheck="false" style="width:100%; height: 100%; background-color: transparent; color: white; border: none; outline: none; padding: 8px 12px; font-size: 14px; font-family: Arial, sans-serif; border-radius: 6px; resize: none;"></textarea>
+          </foreignObject>`;
+      }
+
+      function getDateTimeWidget(x, y, text) {
+        const widgetId = `${text.replace(/\s+/g, '')}Widget`;
+        
+        return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="14" fill="#bbbbbb">${text}</text>
+          <foreignObject x="${x}" y="${y + 10}" width="340" height="180">
+            <div xmlns="http://www.w3.org/1999/xhtml" id="${widgetId}" class="datetime-widget-container" style="width: 100%; height: 100%;"></div>
+          </foreignObject>`;
+      }
+
+      function getSubmitButton(x, y) {
+        return `<rect id="submitButton" x="${x}" y="${y}" width="300" height="45" rx="22.5" fill="#666666" style="cursor: not-allowed;">
+            </rect>
+            <text x="${x + 150}" y="${y + 28}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#999999" text-anchor="middle" dominant-baseline="middle" style="pointer-events: none;">SUBMIT</text>
+        `;
+      }
+
+      function getForm(formJSON, onSubmit) {
+        const keys = Object.keys(formJSON);
+        let currentY = 130;
+        const inputs = [];
+        
+        keys.forEach((key, index) => {
+          if (key === "form") return;
+          
+          const fieldConfig = formJSON[key];
+          if (fieldConfig.type === 'datetime') {
+            inputs.push(getDateTimeWidget(80, currentY, key));
+            currentY += 200;
+          } else if (fieldConfig.type === 'textarea') {
+            inputs.push(getTextArea(80, currentY, key, fieldConfig));
+            const charLimit = fieldConfig.charLimit || 500;
+            const textareaHeight = calculateTextAreaHeight(charLimit);
+            currentY += textareaHeight + 50;
+          } else {
+            inputs.push(getInput(80, currentY, key, fieldConfig.type));
+            currentY += 70;
+          }
+        });
+        
+        inputs.push(getSubmitButton(100, currentY + 20));
+        
+        const svg = getBackgroundAndGradients(formJSON) + inputs.join('');
+        const dynamicHeight = calculateFormHeight(formJSON);
+
+        const container = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        container.setAttribute('viewBox', `0 0 500 ${dynamicHeight + 100}`);
+        container.setAttribute('width', '100%');
+        container.setAttribute('height', 'auto');
+        container.innerHTML = svg;
+
+        setTimeout(() => {
+          Object.keys(formJSON).forEach((key) => {
+            if(key === 'form') return;
+            
+            const fieldConfig = formJSON[key];
+            
+            if (fieldConfig.type === 'datetime') {
+              const widgetId = `${key.replace(/\s+/g, '')}Widget`;
+              const widgetContainer = document.getElementById(widgetId);
+              if (widgetContainer) {
+                createDateTimeSection(widgetId);
+              }
+            } else if (fieldConfig.type === 'textarea') {
+              const textareaId = `${key.replace(/\s+/g, '')}Textarea`;
+              const counterId = `${key.replace(/\s+/g, '')}Counter`;
+              const borderId = `${key.replace(/\s+/g, '')}Border`;
+              const textareaElement = document.getElementById(textareaId);
+              const counterElement = document.getElementById(counterId);
+              const borderElement = document.getElementById(borderId);
+              const charLimit = fieldConfig.charLimit || 500;
+              
+              if (textareaElement && counterElement) {
+                textareaElement.addEventListener('input', (evt) => {
+                  const currentLength = evt.target.value.length;
+                  counterElement.textContent = `${currentLength}/${charLimit}`;
+                  
+                  // Update border color when typing
+                  if (borderElement) {
+                    borderElement.setAttribute('stroke', 'url(#inputGradient)');
+                  }
+                  
+                  // Change counter color if approaching limit
+                  if (currentLength > charLimit * 0.9) {
+                    counterElement.setAttribute('fill', '#ff6b6b');
+                  } else if (currentLength > charLimit * 0.75) {
+                    counterElement.setAttribute('fill', '#ffa726');
+                  } else {
+                    counterElement.setAttribute('fill', '#888');
+                  }
+                });
+              }
+            } else {
+              const inputId = `${key.replace(/\s+/g, '')}Input`;
+              const inputElement = document.getElementById(inputId);
+              
+              if (inputElement) {
+                inputElement.addEventListener('input', (evt) => {
+                  const borderId = `${key.replace(/\s+/g, '')}Border`;
+                  const borderElement = document.getElementById(borderId);
+                  if (borderElement) {
+                    borderElement.setAttribute('stroke', 'url(#inputGradient)');
+                  }
+                });
+              }
+            }
+          });
+        }, 100);
+
+        return container;
+      }
+
+      // Export functions
+      window.getForm = getForm;
+      window.createDateTimeSection = createDateTimeSection;
+
+    })(window);

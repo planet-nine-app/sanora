@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Widget Example</title>
+    
+    <!-- Load Form Widget CSS from endpoint -->
+    <link rel="stylesheet" href="http://localhost:3000/form-widget.css">
+
+    <!-- Load Form Widget JavaScript from endpoint -->
+    <script src="http://localhost:3000/form-widget.js"></script> 
+    
+    <!-- Example page styles -->
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+            font-family: Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #fff;
+        }
+
+        .code-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .code-section pre {
+            margin: 0;
+            color: #e0e0e0;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .property { color: #9cdcfe; }
+        .comment { color: #6a9955; }
+
+        .demo-section {
+            background: #2a2a2e;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .form-container {
+            margin: 20px 0;
+        }
+
+        .demo-button {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+
+        .demo-button:hover {
+            opacity: 0.9;
+        }
+
+        .output {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            color: #90ee90;
+            font-family: monospace;
+            min-height: 50px;
+            white-space: pre-wrap;
+        }
+
+        .server-info {
+            background: #2a2a3e;
+            border-left: 4px solid #6366f1;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .file-list {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .file-list h4 {
+            margin-top: 0;
+            color: #9cdcfe;
+        }
+
+        .file-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .file-list li {
+            margin: 5px 0;
+            color: #ce9178;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Form Widget Endpoint Example</h1>
+
+        <div class="server-info">
+            <h3>📂 File Structure</h3>
+            <div class="file-list">
+                <h4>Server Files:</h4>
+                <ul>
+                    <li><strong>form-widget.js</strong> - Main form widget JavaScript</li>
+                    <li><strong>form-widget.css</strong> - Form widget styles</li>
+                    <li><strong>server.js</strong> - Express server to serve the files</li>
+                    <li><strong>example.html</strong> - This demo page</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>1. Server Setup (server.js)</h2>
+        <div class="code-section">
+            <pre><span class="comment">// server.js</span>
+<span class="keyword">const</span> <span class="property">express</span> = <span class="property">require</span>(<span class="string">'express'</span>);
+<span class="keyword">const</span> <span class="property">fs</span> = <span class="property">require</span>(<span class="string">'fs'</span>);
+<span class="keyword">const</span> <span class="property">path</span> = <span class="property">require</span>(<span class="string">'path'</span>);
+<span class="keyword">const</span> <span class="property">app</span> = <span class="property">express</span>();
+
+<span class="comment">// Serve form widget JavaScript</span>
+<span class="property">app</span>.<span class="property">get</span>(<span class="string">'/form-widget.js'</span>, (<span class="property">req</span>, <span class="property">res</span>) => {
+  <span class="keyword">const</span> <span class="property">widgetCode</span> = <span class="property">fs</span>.<span class="property">readFileSync</span>(<span class="string">'form-widget.js'</span>, <span class="string">'utf8'</span>);
+  <span class="property">res</span>.<span class="property">setHeader</span>(<span class="string">'Content-Type'</span>, <span class="string">'application/javascript'</span>);
+  <span class="property">res</span>.<span class="property">send</span>(<span class="property">widgetCode</span>);
+});
+
+<span class="comment">// Serve form widget CSS</span>
+<span class="property">app</span>.<span class="property">get</span>(<span class="string">'/form-widget.css'</span>, (<span class="property">req</span>, <span class="property">res</span>) => {
+  <span class="keyword">const</span> <span class="property">widgetCSS</span> = <span class="property">fs</span>.<span class="property">readFileSync</span>(<span class="string">'form-widget.css'</span>, <span class="string">'utf8'</span>);
+  <span class="property">res</span>.<span class="property">setHeader</span>(<span class="string">'Content-Type'</span>, <span class="string">'text/css'</span>);
+  <span class="property">res</span>.<span class="property">send</span>(<span class="property">widgetCSS</span>);
+});
+
+<span class="comment">// Serve static files (like this example.html)</span>
+<span class="property">app</span>.<span class="property">use</span>(<span class="property">express</span>.<span class="property">static</span>(<span class="string">'.'</span>));
+
+<span class="property">app</span>.<span class="property">listen</span>(<span class="string">3000</span>, () => {
+  <span class="property">console</span>.<span class="property">log</span>(<span class="string">'Server running on http://localhost:3000'</span>);
+  <span class="property">console</span>.<span class="property">log</span>(<span class="string">'Form widget available at:'</span>);
+  <span class="property">console</span>.<span class="property">log</span>(<span class="string">'  JS:  http://localhost:3000/form-widget.js'</span>);
+  <span class="property">console</span>.<span class="property">log</span>(<span class="string">'  CSS: http://localhost:3000/form-widget.css'</span>);
+});</pre>
+        </div>
+
+        <h2>2. Client-Side Usage</h2>
+        <div class="code-section">
+            <pre><span class="comment">// In your HTML head section:</span>
+&lt;<span class="property">link</span> <span class="property">rel</span>=<span class="string">"stylesheet"</span> <span class="property">href</span>=<span class="string">"http://localhost:3000/form-widget.css"</span>&gt;
+
+<span class="comment">// Load form widget JavaScript:</span>
+&lt;<span class="property">script</span> <span class="property">src</span>=<span class="string">"http://localhost:3000/form-widget.js"</span>&gt;&lt;/<span class="property">script</span>&gt;
+
+<span class="comment">// Or load dynamically:</span>
+<span class="keyword">const</span> <span class="property">script</span> = <span class="property">document</span>.<span class="property">createElement</span>(<span class="string">'script'</span>);
+<span class="property">script</span>.<span class="property">src</span> = <span class="string">'http://localhost:3000/form-widget.js'</span>;
+<span class="property">document</span>.<span class="property">head</span>.<span class="property">appendChild</span>(<span class="property">script</span>);
+
+<span class="property">script</span>.<span class="property">onload</span> = () => {
+  <span class="comment">// Create form configuration</span>
+  <span class="keyword">const</span> <span class="property">formConfig</span> = {
+    <span class="string">"Name"</span>: { <span class="property">type</span>: <span class="string">"text"</span> },
+    <span class="string">"Email"</span>: { <span class="property">type</span>: <span class="string">"text"</span> },
+    <span class="string">"Message"</span>: { <span class="property">type</span>: <span class="string">"textarea"</span>, <span class="property">charLimit</span>: <span class="string">200</span> }
+  };
+
+  <span class="comment">// Create and append form</span>
+  <span class="keyword">const</span> <span class="property">form</span> = <span class="property">getForm</span>(<span class="property">formConfig</span>);
+  <span class="property">document</span>.<span class="property">getElementById</span>(<span class="string">'form-container'</span>).<span class="property">appendChild</span>(<span class="property">form</span>);
+
+  <span class="comment">// Extract form data</span>
+  <span class="keyword">function</span> <span class="property">getFormData</span>() {
+    <span class="keyword">const</span> <span class="property">data</span> = {};
+    <span class="property">Object</span>.<span class="property">keys</span>(<span class="property">formConfig</span>).<span class="property">forEach</span>(<span class="property">key</span> => {
+      <span class="keyword">if</span> (<span class="property">formConfig</span>[<span class="property">key</span>].<span class="property">type</span> === <span class="string">'text'</span>) {
+        <span class="keyword">const</span> <span class="property">input</span> = <span class="property">document</span>.<span class="property">getElementById</span>(`${<span class="property">key</span>.<span class="property">replace</span>(/\s+/g, <span class="string">''</span>)}Input`);
+        <span class="property">data</span>[<span class="property">key</span>] = <span class="property">input</span>?.<span class="property">value</span> || <span class="string">''</span>;
+      }
+      <span class="keyword">if</span> (<span class="property">formConfig</span>[<span class="property">key</span>].<span class="property">type</span> === <span class="string">'textarea'</span>) {
+        <span class="keyword">const</span> <span class="property">textarea</span> = <span class="property">document</span>.<span class="property">getElementById</span>(`${<span class="property">key</span>.<span class="property">replace</span>(/\s+/g, <span class="string">''</span>)}Textarea`);
+        <span class="property">data</span>[<span class="property">key</span>] = <span class="property">textarea</span>?.<span class="property">value</span> || <span class="string">''</span>;
+      }
+    });
+    <span class="keyword">return</span> <span class="property">data</span>;
+  }
+};</pre>
+        </div>
+
+        <h2>3. Live Demo</h2>
+        <div class="demo-section">
+            <div id="form-container" class="form-container"></div>
+            
+            <button class="demo-button" onclick="showFormData()">Get Form Data</button>
+            <button class="demo-button" onclick="clearForm()">Clear Form</button>
+            
+            <h3>Form Output:</h3>
+            <div id="output" class="output">Fill out the form and click "Get Form Data" to see the output...</div>
+        </div>
+    </div>
+
+   
+    <script>
+        // Create form with the loaded widget
+        const formConfig = {
+          "Name": { type: "text" },
+          "Email": { type: "text" },
+          "Message": { type: "textarea", charLimit: 200 }
+        };
+
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if form widget is loaded
+            if (typeof getForm === 'undefined') {
+                document.getElementById('output').textContent = 'Error: Form widget not loaded. Make sure the server is running on localhost:3000';
+                return;
+            }
+
+            const form = getForm(formConfig);
+            document.getElementById('form-container').appendChild(form);
+        });
+
+        // Form data extraction function
+        function getFormData() {
+            const data = {};
+            
+            // Get text inputs
+            Object.keys(formConfig).forEach(key => {
+              if (formConfig[key].type === 'text') {
+                const input = document.getElementById(`${key.replace(/\s+/g, '')}Input`);
+                data[key] = input?.value || '';
+              }
+              if (formConfig[key].type === 'textarea') {
+                const textarea = document.getElementById(`${key.replace(/\s+/g, '')}Textarea`);
+                data[key] = textarea?.value || '';
+              }
+            });
+            
+            // Get image data
+            data.images = window.formImageData || {};
+            
+            // Get datetime data
+            data.events = window.dateTimes || [];
+            
+            return data;
+        }
+
+        // Demo functions
+        function showFormData() {
+            const data = getFormData();
+            document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+        }
+
+        function clearForm() {
+            Object.keys(formConfig).forEach(key => {
+              if (formConfig[key].type === 'text') {
+                const input = document.getElementById(`${key.replace(/\s+/g, '')}Input`);
+                if (input) input.value = '';
+              }
+              if (formConfig[key].type === 'textarea') {
+                const textarea = document.getElementById(`${key.replace(/\s+/g, '')}Textarea`);
+                if (textarea) textarea.value = '';
+                const counter = document.getElementById(`${key.replace(/\s+/g, '')}Counter`);
+                if (counter) counter.textContent = `0/${formConfig[key].charLimit || 500}`;
+              }
+            });
+            
+            // Clear global data
+            if (window.formImageData) window.formImageData = {};
+            if (window.dateTimes) window.dateTimes = [];
+            
+            document.getElementById('output').textContent = 'Form cleared! Fill out the form and click "Get Form Data" to see the output...';
+        }
+    </script>
+</body>
+</html>
