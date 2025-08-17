@@ -410,3 +410,61 @@ if (teleportedData.valid) {
 - **Visual + Data**: Provides both human-readable display and machine-parseable data
 
 </details>
+
+## Form Widget System
+
+Sanora includes a comprehensive SVG-based form widget system located in `/public/form-widget.js` that provides dynamic form generation for various field types. The widget is designed for creating product upload forms with validation and file handling capabilities.
+
+### Supported Field Types
+
+- **`text`** - Single-line text inputs with validation
+- **`textarea`** - Multi-line text areas with character limits
+- **`image`** - Image upload with preview and validation
+- **`artifact`** - General file upload for digital goods (PDF, EPUB, ZIP, MP3, MP4, EXE, TXT, DOC)
+- **`catalog`** - Specialized file upload for CSV/JSON catalog data *(Added January 2025)*
+- **`datetime`** - Date and time picker widget
+
+### Catalog Field Type (🆕 January 2025)
+
+The **`catalog`** field type is specifically designed for hierarchical menu/catalog data upload:
+
+**Features**:
+- **File Restrictions**: Only accepts `.csv` and `.json` files
+- **Size Limit**: 10MB maximum (smaller than artifact's 100MB)
+- **Validation**: Strict MIME type checking for catalog data
+- **Visual Feedback**: 🍽️ menu icon and catalog-specific messaging
+- **Drag & Drop**: Full drag-and-drop support with visual feedback
+
+**Usage in Form Config**:
+```json
+{
+  "CSV or JSON File": {
+    "type": "catalog"
+  }
+}
+```
+
+**Data Storage**: Catalog files are stored in `window.formCatalogData[fieldKey]` with file object, name, size, and type.
+
+**Clear Function**: Global `clearCatalog(fieldKey)` function for removing uploaded catalogs.
+
+### Integration with Menu System
+
+The catalog field integrates with Ninefy's menu product type to:
+1. **Upload CSV/JSON files** containing hierarchical menu structures
+2. **Parse menu data** into tree structures (rider → time span → product)
+3. **Upload individual products** to Sanora with price and metadata
+4. **Map Sanora UUIDs** back to the menu tree structure
+5. **Store complete menu** as public data in BDO for cross-base discovery
+
+**Example CSV Format**:
+```csv
+,rider,time span,product,price
+,adult,two-hour,adult two-hour 250,2.50
+,adult,day,adult day 500,5.00
+,youth,two-hour,youth two-hour 100,1.00
+```
+
+This creates a hierarchical menu system that enables complex product catalogs while maintaining Sanora's lightweight approach.
+
+</details>

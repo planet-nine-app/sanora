@@ -352,6 +352,9 @@
   function calculateArtifactInputHeight() {
     return 140; // Fixed height for artifact upload area (slightly larger)
   }
+  function calculateCatalogInputHeight() {
+    return 140; // Fixed height for catalog upload area (same as artifact)
+  }
 
   function calculateFormHeight(formConfig) {
     const fields = Object.keys(formConfig).filter(key => key !== 'form');
@@ -380,6 +383,9 @@
       } else if (fieldConfig.type === 'artifact') {
         const artifactHeight = calculateArtifactInputHeight();
         totalHeight += artifactHeight + 50; // Label + artifact area + padding
+      } else if (fieldConfig.type === 'catalog') {
+        const catalogHeight = calculateCatalogInputHeight();
+        totalHeight += catalogHeight + 50; // Label + catalog area + padding
       } else {
         totalHeight += standardFieldHeight;
       }
@@ -512,6 +518,35 @@
       </foreignObject>`;
   }
 
+  function getCatalogInput(x, y, text, fieldConfig) {
+    const borderId = `${text.replace(/\s+/g, '')}CatalogBorder`;
+    const containerId = `${text.replace(/\s+/g, '')}CatalogContainer`;
+    const inputId = `${text.replace(/\s+/g, '')}CatalogInput`;
+    const previewId = `${text.replace(/\s+/g, '')}CatalogPreview`;
+    const statusId = `${text.replace(/\s+/g, '')}CatalogStatus`;
+    const catalogHeight = calculateCatalogInputHeight();
+    return `<text x="${x}%" y="${y}" font-family="Arial, sans-serif" font-size="0.875em" fill="#bbbbbb">${text}</text>
+      <!-- Catalog Upload Background -->
+      <rect id="${borderId}" x="${x}%" y="${y + 10}" width="90%" height="${catalogHeight}" rx="8" fill="#1c1c20" 
+            stroke="#444" stroke-width="0.25%" stroke-dasharray="0.7% 0.7%" class="input-field catalog-dropzone"/>
+      <!-- HTML Catalog Upload Container -->
+      <foreignObject x="${x + 0.5}%" y="${y + 15}" width="89%" height="${catalogHeight - 10}">
+        <div xmlns="http://www.w3.org/1999/xhtml" id="${containerId}" class="catalog-upload-container" style="width:100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+          <input type="file" id="${inputId}" accept=".csv,.json" data-field="${text}" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;"/>
+          <div id="${previewId}" style="width: 100%; height: 100%; display: none; border: 2px solid #4CAF50; border-radius: 6px; padding: 15px; background: #f8f9fa; position: relative; align-items: center; justify-content: center;">
+            <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 16px;" onclick="clearCatalog('${text}')">&times;</div>
+            <div style="text-align: center; font-size: 14px; color: #333;"><strong>Catalog uploaded:</strong><br><span id="${previewId}Name"></span><br><small id="${previewId}Size" style="color: #666;"></small></div>
+          </div>
+          <div id="${statusId}" style="text-align: center; color: #888; font-size: 14px; pointer-events: none; z-index: 1;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🍽️</div>
+            <div>Drag &amp; drop or click to upload catalog</div>
+            <div style="font-size: 12px; margin-top: 4px;">CSV or JSON files only</div>
+            <div style="font-size: 11px; margin-top: 2px; color: #aaa;">(max 10MB)</div>
+          </div>
+        </div>
+      </foreignObject>`;
+  }
+
   function getDateTimeWidget(x, y, text) {
     const widgetId = `${text.replace(/\s+/g, '')}Widget`;
     
@@ -556,6 +591,10 @@
         inputs.push(getArtifactInput(5, currentY, key, fieldConfig));
         const artifactHeight = calculateArtifactInputHeight();
         currentY += artifactHeight + 50;
+      } else if (fieldConfig.type === 'catalog') {
+        inputs.push(getCatalogInput(5, currentY, key, fieldConfig));
+        const catalogHeight = calculateCatalogInputHeight();
+        currentY += catalogHeight + 50;
       } else {
         inputs.push(getInput(5, currentY, key, fieldConfig.type));
         currentY += 70;
@@ -619,6 +658,8 @@
           setupImageInput(key);
         } else if (fieldConfig.type === 'artifact') {
           setupArtifactInput(key);
+        } else if (fieldConfig.type === 'catalog') {
+          setupCatalogInput(key);
         } else {
           const inputId = `${key.replace(/\s+/g, '')}Input`;
           const inputElement = document.getElementById(inputId);
@@ -755,6 +796,12 @@
         if (isRequired && !hasArtifact) {
           allFieldsFilled = false;
         }
+      } else if (fieldConfig.type === 'catalog') {
+        const hasCatalog = !!(window.formCatalogData && window.formCatalogData[key]);
+        fieldValidation[key] = { type: 'catalog', required: isRequired, filled: hasCatalog };
+        if (isRequired && !hasCatalog) {
+          allFieldsFilled = false;
+        }
       } else if (fieldConfig.type === 'textarea') {
         const textareaId = `${key.replace(/\s+/g, '')}Textarea`;
         const textareaElement = document.getElementById(textareaId);
@@ -820,6 +867,13 @@
         // Get artifact data from global storage
         if (window.formArtifactData && window.formArtifactData[key]) {
           formData[key] = window.formArtifactData[key];
+        } else {
+          formData[key] = null;
+        }
+      } else if (fieldConfig.type === 'catalog') {
+        // Get catalog data from global storage
+        if (window.formCatalogData && window.formCatalogData[key]) {
+          formData[key] = window.formCatalogData[key];
         } else {
           formData[key] = null;
         }
@@ -1126,6 +1180,137 @@
     }
     
     // Trigger form validation after clearing artifact
+    if (typeof validateFormAndUpdateSubmit === 'function' && window.currentFormJSON) {
+      setTimeout(() => {
+        validateFormAndUpdateSubmit(window.currentFormJSON);
+      }, 100);
+    }
+  };
+
+  // Catalog upload utility functions
+  function setupCatalogInput(fieldKey) {
+    const inputId = `${fieldKey.replace(/\s+/g, '')}CatalogInput`;
+    const containerId = `${fieldKey.replace(/\s+/g, '')}CatalogContainer`;
+    const previewId = `${fieldKey.replace(/\s+/g, '')}CatalogPreview`;
+    const statusId = `${fieldKey.replace(/\s+/g, '')}CatalogStatus`;
+    const borderId = `${fieldKey.replace(/\s+/g, '')}CatalogBorder`;
+    
+    const inputElement = document.getElementById(inputId);
+    const containerElement = document.getElementById(containerId);
+    const previewElement = document.getElementById(previewId);
+    const statusElement = document.getElementById(statusId);
+    const borderElement = document.getElementById(borderId);
+    
+    if (!inputElement) return;
+    
+    // Handle file selection
+    inputElement.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      handleCatalogUpload(file, fieldKey, previewElement, statusElement, borderElement);
+    });
+    
+    // Handle drag and drop
+    if (containerElement) {
+      containerElement.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        borderElement.setAttribute('stroke', 'url(#inputGradient)');
+      });
+      
+      containerElement.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        if (!window.formCatalogData || !window.formCatalogData[fieldKey]) {
+          borderElement.setAttribute('stroke', '#444');
+        }
+      });
+      
+      containerElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        handleCatalogUpload(file, fieldKey, previewElement, statusElement, borderElement);
+      });
+    }
+  }
+
+  function handleCatalogUpload(file, fieldKey, previewElement, statusElement, borderElement) {
+    if (!file) return;
+    
+    // Validate file type (only CSV and JSON)
+    const allowedTypes = [
+      'text/csv',
+      'application/json',
+      'text/plain' // Sometimes CSV files come as text/plain
+    ];
+    
+    const allowedExtensions = ['.csv', '.json'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      alert('Please select a CSV or JSON file for catalog data');
+      return;
+    }
+    
+    // Validate file size (10MB limit for catalogs)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert('Catalog file size must be less than 10MB');
+      return;
+    }
+    
+    // Show file preview
+    const previewNameElement = document.getElementById(previewElement.id + 'Name');
+    const previewSizeElement = document.getElementById(previewElement.id + 'Size');
+    
+    if (previewNameElement) previewNameElement.textContent = file.name;
+    if (previewSizeElement) previewSizeElement.textContent = `${(file.size / 1024).toFixed(2)} KB`;
+    
+    previewElement.style.display = 'flex';
+    statusElement.style.display = 'none';
+    borderElement.setAttribute('stroke', 'url(#inputGradient)');
+    borderElement.setAttribute('stroke-dasharray', 'none');
+    
+    // Store catalog data for form submission
+    if (!window.formCatalogData) window.formCatalogData = {};
+    window.formCatalogData[fieldKey] = {
+      file: file,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    };
+    
+    // Trigger form validation after successful catalog upload
+    if (typeof validateFormAndUpdateSubmit === 'function' && window.currentFormJSON) {
+      setTimeout(() => {
+        validateFormAndUpdateSubmit(window.currentFormJSON);
+      }, 100);
+    }
+  }
+
+  // Global function to clear catalog uploads
+  window.clearCatalog = function(fieldKey) {
+    const previewId = `${fieldKey.replace(/\s+/g, '')}CatalogPreview`;
+    const statusId = `${fieldKey.replace(/\s+/g, '')}CatalogStatus`;
+    const borderId = `${fieldKey.replace(/\s+/g, '')}CatalogBorder`;
+    const inputId = `${fieldKey.replace(/\s+/g, '')}CatalogInput`;
+    
+    const previewElement = document.getElementById(previewId);
+    const statusElement = document.getElementById(statusId);
+    const borderElement = document.getElementById(borderId);
+    const inputElement = document.getElementById(inputId);
+    
+    if (previewElement) previewElement.style.display = 'none';
+    if (statusElement) statusElement.style.display = 'block';
+    if (borderElement) {
+      borderElement.setAttribute('stroke', '#444');
+      borderElement.setAttribute('stroke-dasharray', '0.7% 0.7%');
+    }
+    if (inputElement) inputElement.value = '';
+    
+    // Clear stored data
+    if (window.formCatalogData && window.formCatalogData[fieldKey]) {
+      delete window.formCatalogData[fieldKey];
+    }
+    
+    // Trigger form validation after clearing catalog
     if (typeof validateFormAndUpdateSubmit === 'function' && window.currentFormJSON) {
       setTimeout(() => {
         validateFormAndUpdateSubmit(window.currentFormJSON);
