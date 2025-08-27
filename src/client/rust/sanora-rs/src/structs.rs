@@ -55,7 +55,8 @@ pub struct ProductMeta {
     pub title: String,
     pub description: String,
     pub price: u32,
-    pub artifacts: Vec<String>
+    pub artifacts: Vec<String>,
+    pub category: String
 }
 
 impl Default for ProductMeta {
@@ -65,7 +66,8 @@ impl Default for ProductMeta {
             title: "".to_string(),
             description: "".to_string(),
             price: 0,
-            artifacts: Vec::<String>::new()
+            artifacts: Vec::<String>::new(),
+            category: "general".to_string()
         }
     }
 }

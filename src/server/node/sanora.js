@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import fileUpload from 'express-fileupload';
 import session from 'express-session';
 import store from 'memorystore';
@@ -75,6 +76,7 @@ if (addieUser && keys && basePubKey) {
 
 const app = express();
 
+app.use(cors());
 app.use(fileUpload({
     createParentPath: true
 }));

@@ -118,7 +118,7 @@ impl Sanora {
         Ok(user)
     }
 
-    pub async fn add_product(&self, uuid: &str, title: &str, description: &str, price: &u32) -> Result<ProductMeta, Box<dyn std::error::Error>> {
+    pub async fn add_product(&self, uuid: &str, title: &str, description: &str, price: &u32, category: &str) -> Result<ProductMeta, Box<dyn std::error::Error>> {
         let timestamp = Self::get_timestamp();
         let message = format!("{}{}{}{}{}", timestamp, uuid, title, description, price);
         let signature = self.sessionless.sign(&message).to_hex();
@@ -127,7 +127,8 @@ impl Sanora {
             "timestamp": timestamp,
             "description": description,
             "price": price,
-            "signature": signature
+            "signature": signature,
+            "category": category
         }).as_object().unwrap().clone();
 
         let url = format!("{}user/{}/product/{}", self.base_url, uuid, title);
