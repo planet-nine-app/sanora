@@ -4,6 +4,7 @@ import fileUpload from 'express-fileupload';
 import session from 'express-session';
 import store from 'memorystore';
 import db from './src/persistence/db.js';
+import MAGIC from './src/magic/magic.js';
 import generic from './src/product-pages/generic.js';
 import blog from './src/product-pages/blog.js';
 import genericAddressStripe from './src/product-pages/generic-address-stripe.js';
@@ -864,6 +865,41 @@ app.get('/teleportable-products', async (req, res) => {
   } catch (error) {
     console.error('Error generating teleportable products:', error);
     res.status(500).send('Error generating product feed');
+  }
+});
+
+// MAGIC Protocol endpoint
+app.post('/magic/spell/:spellName', async (req, res) => {
+  try {
+    const spellName = req.params.spellName;
+    const spell = req.body;
+
+    console.log(`🪄 Received MAGIC spell: ${spellName}`);
+
+    // Verify spell has required structure
+    if (!spell || !spell.casterUUID || !spell.components) {
+      return res.status(400).send({
+        success: false,
+        error: 'Invalid spell structure'
+      });
+    }
+
+    // Execute the spell
+    if (MAGIC[spellName]) {
+      const result = await MAGIC[spellName](spell);
+      res.send(result);
+    } else {
+      res.status(404).send({
+        success: false,
+        error: `Unknown spell: ${spellName}`
+      });
+    }
+  } catch (error) {
+    console.error('❌ MAGIC spell execution failed:', error);
+    res.status(500).send({
+      success: false,
+      error: error.message
+    });
   }
 });
 

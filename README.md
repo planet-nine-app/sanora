@@ -467,4 +467,181 @@ The catalog field integrates with Ninefy's menu product type to:
 
 This creates a hierarchical menu system that enables complex product catalogs while maintaining Sanora's lightweight approach.
 
+## MAGIC Protocol Integration
+
+Sanora now supports the MAGIC protocol for creating products with associated BDOs (Base Data Objects) in a single action. This enables one-click product creation with automatic shareable BDO generation.
+
+### Available Spells
+
+#### `enchant-product` Spell
+
+**Purpose**: Creates both a Sanora product AND a shareable BDO together in one action.
+
+**Cost**: 200 MP (Mana Points)
+
+**Location**: `/src/server/node/src/magic/magic.js`
+
+**What it does**:
+1. Creates a product in Sanora with full metadata
+2. Auto-generates an SVG card for the product (or uses provided SVG)
+3. Creates a public BDO with the product data and SVG
+4. Returns both the product details and BDO emoji shortcode
+
+**Spell Components**:
+```javascript
+{
+  title: "Product Title",
+  description: "Product description",
+  price: 2999, // Price in cents
+  tags: ["tag1", "tag2"],
+  category: "general", // Product category
+  contentType: "physical", // physical, digital, service, etc.
+  productId: "unique-product-id",
+  metadata: {}, // Optional metadata object
+  svgContent: "..." // Optional SVG (auto-generated if not provided)
+}
+```
+
+**Response Format**:
+```javascript
+{
+  success: true,
+  product: {
+    uuid: "user-uuid",
+    title: "Product Title",
+    productId: "unique-product-id",
+    price: 2999
+  },
+  bdo: {
+    uuid: "bdo-uuid",
+    pubKey: "02abc123...",
+    emojiShortcode: "🌍🔑💎🌟💎🎨🐉📌"
+  },
+  message: "Product and BDO created successfully"
+}
+```
+
+**MAGIC Endpoint**:
+```http
+POST /magic/spell/enchant-product
+Content-Type: application/json
+
+{
+  "casterUUID": "user-uuid",
+  "gateway": {
+    "timestamp": "1234567890",
+    "uuid": "user-uuid",
+    "minimumCost": 200,
+    "ordinal": 0,
+    "signature": "spell-gateway-signature"
+  },
+  "components": {
+    // spell components here
+  }
+}
+```
+
+### SVG Auto-Generation
+
+When no `svgContent` is provided, the spell automatically generates a professional product card:
+
+**Features**:
+- Gradient background (Planet Nine purple)
+- Category-specific emoji (📚 for ebooks, 🎓 for courses, etc.)
+- Product title (truncated if needed)
+- Category label
+- Price display (formatted as $XX.XX)
+- Product ID
+- "Powered by Planet Nine" footer
+
+**Generated SVG Structure**:
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <!-- Gradient background -->
+  <!-- Category emoji (80px) -->
+  <!-- Product title (32px, bold) -->
+  <!-- Category label (18px) -->
+  <!-- Price ($XX.XX in green, 48px) -->
+  <!-- Product ID (14px) -->
+  <!-- Footer (16px) -->
+</svg>
+```
+
+### Integration Examples
+
+**From Seed Script** (`/allyabase/deployment/docker/seed-ecosystem.js`):
+```javascript
+// Cast enchant-product spell to create product + BDO
+const spell = {
+  casterUUID: user.uuid,
+  gateway: {
+    timestamp: Date.now().toString(),
+    uuid: user.uuid,
+    signature: gatewaySignature,
+    minimumCost: 200,
+    ordinal: 0
+  },
+  components: {
+    title: "My Product",
+    description: "Product description",
+    price: 2999,
+    tags: ["tag1"],
+    category: "general",
+    contentType: "physical",
+    productId: "my-product",
+    metadata: {}
+  }
+};
+
+const response = await fetch(`${sanoraUrl}/magic/spell/enchant-product`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(spell)
+});
+
+const result = await response.json();
+// result contains both product and bdo with emoji shortcode
+```
+
+**From Ninefy** (`/the-nullary/ninefy/ninefy/src/main.js`):
+Users can check a box "🪄 Also create BDO for sharing" when uploading products, which triggers the `castEnchantProductSpell()` function to use this spell instead of direct product upload.
+
+### Benefits
+
+1. **One-Click Creation**: Create both product and shareable BDO in single action
+2. **Automatic SVG**: No need to design product cards manually
+3. **Easy Sharing**: Get emoji shortcode instantly for cross-base sharing
+4. **Cost 200 MP**: Affordable spell cost for creating shareable products
+5. **Public by Default**: BDOs are public for maximum discoverability
+
+### BDO Structure
+
+Products created via `enchant-product` spell store in BDO with this structure:
+```javascript
+{
+  title: "Product Title - Product BDO",
+  type: "product",
+  productId: "unique-product-id",
+  price: 2999,
+  svgContent: "<svg>...</svg>",
+  category: "general",
+  contentType: "physical",
+  metadata: {
+    sanoraUUID: "user-uuid",
+    productTitle: "Product Title",
+    priceFormatted: "29.99",
+    createdViaSpell: true,
+    spellCaster: "caster-uuid"
+  },
+  description: "Product description"
+}
+```
+
+### Future Spells
+
+Additional MAGIC spells planned for Sanora:
+- `update-product` - Update existing product and BDO together
+- `bundle-products` - Create product bundles with discounts
+- `schedule-release` - Schedule product releases with automatic BDO creation
+
 </details>
