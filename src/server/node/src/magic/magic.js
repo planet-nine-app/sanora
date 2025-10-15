@@ -187,6 +187,288 @@ const MAGIC = {
     }
   },
 
+  // 🪄 MAGIC-ROUTED ENDPOINTS (No auth needed - resolver authorizes)
+
+  sanoraUserCreate: async (spell) => {
+    try {
+      const { pubKey } = spell.components;
+
+      if (!pubKey) {
+        return {
+          success: false,
+          error: 'Missing required field: pubKey'
+        };
+      }
+
+      // Get basePubKey from db
+      const keys = await db.getKeys();
+      const basePubKey = keys ? keys.pubKey : null;
+
+      // Create addie user
+      const addieModule = await import('addie-js');
+      const addie = addieModule.default;
+      const SUBDOMAIN = process.env.SUBDOMAIN || 'dev';
+      addie.baseURL = process.env.LOCALHOST ? 'http://127.0.0.1:3005/' : `https://${SUBDOMAIN}.addie.allyabase.com/`;
+
+      const timestamp = Date.now().toString();
+      const message = timestamp + pubKey;
+
+      // We need to sign with the caster's keys for addie
+      // But for now, let's just forward the request
+      const resp = await fetch(`${addie.baseURL}user/create`, {
+        method: 'put',
+        body: JSON.stringify({ timestamp, pubKey, signature: spell.casterSignature }),
+        headers: {'Content-Type': 'application/json'}
+      });
+
+      const newAddieUser = await resp.json();
+      const foundUser = await db.putUser({ pubKey, addieUser: newAddieUser, basePubKey });
+
+      return {
+        success: true,
+        user: foundUser
+      };
+    } catch (err) {
+      console.error('sanoraUserCreate error:', err);
+      return {
+        success: false,
+        error: err.message
+      };
+    }
+  },
+
+  sanoraUserProcessor: async (spell) => {
+    try {
+      const { uuid, processor } = spell.components;
+
+      if (!uuid || !processor) {
+        return {
+          success: false,
+          error: 'Missing required fields: uuid, processor'
+        };
+      }
+
+      const foundUser = await db.getUserByUUID(uuid);
+      if (!foundUser) {
+        return {
+          success: false,
+          error: 'User not found'
+        };
+      }
+
+      const addieModule = await import('addie-js');
+      const addie = addieModule.default;
+      const SUBDOMAIN = process.env.SUBDOMAIN || 'dev';
+      addie.baseURL = process.env.LOCALHOST ? 'http://127.0.0.1:3005/' : `https://${SUBDOMAIN}.addie.allyabase.com/`;
+
+      const resp = await fetch(`${addie.baseURL}user/${foundUser.addieUser.uuid}/processor/${processor}`, {
+        method: 'put',
+        body: JSON.stringify(spell.components),
+        headers: {'Content-Type': 'application/json'}
+      });
+
+      const json = await resp.json();
+
+      return {
+        success: true,
+        result: json
+      };
+    } catch (err) {
+      console.error('sanoraUserProcessor error:', err);
+      return {
+        success: false,
+        error: err.message
+      };
+    }
+  },
+
+  sanoraUserProduct: async (spell) => {
+    try {
+      const { uuid, title, description, price } = spell.components;
+
+      if (!uuid || !title || !description || price === undefined) {
+        return {
+          success: false,
+          error: 'Missing required fields: uuid, title, description, price'
+        };
+      }
+
+      const foundUser = await db.getUserByUUID(uuid);
+      if (!foundUser) {
+        return {
+          success: false,
+          error: 'User not found'
+        };
+      }
+
+      const product = await db.putProduct(foundUser, {
+        title,
+        description,
+        price,
+        artifacts: [],
+        ...spell.components
+      });
+
+      return {
+        success: true,
+        product
+      };
+    } catch (err) {
+      console.error('sanoraUserProduct error:', err);
+      return {
+        success: false,
+        error: err.message
+      };
+    }
+  },
+
+  sanoraUserProductImage: async (spell) => {
+    try {
+      const { uuid, title, imageData, imageExtension } = spell.components;
+
+      if (!uuid || !title || !imageData) {
+        return {
+          success: false,
+          error: 'Missing required fields: uuid, title, imageData'
+        };
+      }
+
+      const product = await db.getProduct(uuid, title);
+      if (!product) {
+        return {
+          success: false,
+          error: 'Product not found'
+        };
+      }
+
+      const foundUser = await db.getUserByUUID(uuid);
+      if (!foundUser) {
+        return {
+          success: false,
+          error: 'User not found'
+        };
+      }
+
+      // Generate UUID for image
+      const imageUUID = sessionless.generateUUID();
+
+      // Decode base64 image data and save to file
+      const fs = await import('fs');
+      const imageBuffer = Buffer.from(imageData, 'base64');
+      await fs.default.promises.writeFile(`./images/${imageUUID}`, imageBuffer);
+
+      product.image = imageUUID;
+      await db.putProduct(foundUser, product);
+
+      return {
+        success: true,
+        imageUUID
+      };
+    } catch (err) {
+      console.error('sanoraUserProductImage error:', err);
+      return {
+        success: false,
+        error: err.message
+      };
+    }
+  },
+
+  sanoraUserProductArtifact: async (spell) => {
+    try {
+      const { uuid, title, artifactData, artifactType, artifactExtension } = spell.components;
+
+      if (!uuid || !title || !artifactData) {
+        return {
+          success: false,
+          error: 'Missing required fields: uuid, title, artifactData'
+        };
+      }
+
+      const product = await db.getProduct(uuid, title);
+      if (!product) {
+        return {
+          success: false,
+          error: 'Product not found'
+        };
+      }
+
+      const foundUser = await db.getUserByUUID(uuid);
+      if (!foundUser) {
+        return {
+          success: false,
+          error: 'User not found'
+        };
+      }
+
+      // Generate UUID for artifact
+      const artifactUUID = sessionless.generateUUID();
+      const extension = artifactExtension || '';
+      const artifactName = artifactUUID + extension;
+
+      // Decode base64 artifact data and save to file
+      const fs = await import('fs');
+      const artifactBuffer = Buffer.from(artifactData, 'base64');
+      await fs.default.promises.writeFile(`./artifacts/${artifactName}`, artifactBuffer);
+
+      product.artifacts.push(artifactName);
+      await db.putProduct(foundUser, product);
+
+      return {
+        success: true,
+        artifactName
+      };
+    } catch (err) {
+      console.error('sanoraUserProductArtifact error:', err);
+      return {
+        success: false,
+        error: err.message
+      };
+    }
+  },
+
+  sanoraUserOrders: async (spell) => {
+    try {
+      const { uuid, order } = spell.components;
+
+      if (!uuid || !order) {
+        return {
+          success: false,
+          error: 'Missing required fields: uuid, order'
+        };
+      }
+
+      const foundUser = await db.getUserByUUID(uuid);
+      if (!foundUser) {
+        return {
+          success: false,
+          error: 'User not found'
+        };
+      }
+
+      // TODO: There needs to be some step here that verifies that payment has settled
+      const orderUser = await db.getUserByUUID(order.userUUID);
+      if (!orderUser) {
+        return {
+          success: false,
+          error: 'Order user not found'
+        };
+      }
+
+      await db.updateOrder(orderUser, order);
+
+      return {
+        success: true,
+        user: foundUser
+      };
+    } catch (err) {
+      console.error('sanoraUserOrders error:', err);
+      return {
+        success: false,
+        error: err.message
+      };
+    }
+  },
+
   gatewayForSpell: async (spellName) => {
     const keys = await db.getKeys();
     const user = await db.getUserByPublicKey(keys.pubKey);
