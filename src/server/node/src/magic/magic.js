@@ -83,19 +83,24 @@ const MAGIC = {
         category
       });
 
-      // 3. Create BDO with the product
+      // 3. Create BDO with the product - generate unique keys for each companion BDO
       const timestamp = Date.now().toString();
       const hash = '';
-      const keys = await db.getKeys();
 
-      if (!keys || !keys.pubKey) {
-        console.error('  ❌ Failed to get Sanora base keys for BDO creation');
+      // Generate NEW keys for this specific companion BDO (not Sanora base keys!)
+      const companionKeys = await sessionless.generateKeys(
+        (keys) => {}, // saveKeys - noop for companion BDOs
+        () => null     // getKeys - noop for companion BDOs
+      );
+
+      if (!companionKeys || !companionKeys.pubKey) {
+        console.error('  ❌ Failed to generate companion BDO keys');
         // Return success with product only, note BDO failure
         return {
           success: true,
           product,
           bdo: null,
-          warning: 'Product created but BDO creation failed (no keys)'
+          warning: 'Product created but BDO creation failed (key generation failed)'
         };
       }
 
@@ -118,13 +123,20 @@ const MAGIC = {
         description: description || `Product listing for ${title}`
       };
 
-      const messageToSign = timestamp + hash + keys.pubKey;
+      const messageToSign = timestamp + hash + companionKeys.pubKey;
+
+      // Sign with the companion keys
+      const savedCurrentKeys = sessionless.getKeys();
+      sessionless.saveKeys(companionKeys); // Temporarily set companion keys for signing
       const signature = await sessionless.sign(messageToSign);
+      if (savedCurrentKeys) {
+        sessionless.saveKeys(savedCurrentKeys); // Restore original keys
+      }
 
       const bdoPayload = {
         timestamp,
         hash,
-        pubKey: keys.pubKey,
+        pubKey: companionKeys.pubKey,
         signature,
         public: true,
         bdo: bdoData
@@ -162,7 +174,7 @@ const MAGIC = {
           },
           bdo: {
             uuid: bdoResult.uuid,
-            pubKey: keys.pubKey,
+            pubKey: companionKeys.pubKey,
             emojiShortcode: bdoResult.emojiShortcode
           },
           message: 'Product and BDO created successfully'
