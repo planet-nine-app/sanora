@@ -134,3 +134,4 @@ data
 artifacts
 images
 target
+package-lock.json
