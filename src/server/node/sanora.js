@@ -868,6 +868,482 @@ app.get('/teleportable-products', async (req, res) => {
   }
 });
 
+// AuthTeam challenge for orders page
+app.get('/authteam', async (req, res) => {
+  try {
+    // Generate random colored button sequence for authteam game
+    const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+    const sequenceLength = 5;
+    const sequence = [];
+
+    for (let i = 0; i < sequenceLength; i++) {
+      sequence.push(colors[Math.floor(Math.random() * colors.length)]);
+    }
+
+    // Generate authteam session token
+    const authToken = sessionless.generateUUID();
+
+    // Store challenge in session (expires in 5 minutes)
+    if (!req.session.authChallenges) {
+      req.session.authChallenges = {};
+    }
+    req.session.authChallenges[authToken] = {
+      sequence,
+      expires: Date.now() + 300000, // 5 minutes
+      completed: false
+    };
+
+    // Return authteam HTML
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sanora Orders - AuthTeam</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 600px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 40px;
+    }
+    .instruction {
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .color-button {
+      width: 100%;
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 50%;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    .color-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .color-button:active {
+      transform: scale(0.95);
+    }
+    .color-button.red { background: #e74c3c; }
+    .color-button.blue { background: #3498db; }
+    .color-button.green { background: #2ecc71; }
+    .color-button.yellow { background: #f1c40f; color: #333; }
+    .color-button.purple { background: #9b59b6; }
+    .color-button.orange { background: #e67e22; }
+    .sequence-display {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-family: monospace;
+      font-size: 18px;
+    }
+    .status {
+      font-size: 24px;
+      font-weight: bold;
+      min-height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📦 Sanora Orders</h1>
+    <div class="subtitle">AuthTeam Authentication Required</div>
+
+    <div class="instruction">
+      Press the colored buttons in the correct sequence to access orders!
+    </div>
+
+    <div class="sequence-display">
+      Target: <span id="targetSequence">${sequence.join(' → ')}</span>
+    </div>
+
+    <div class="sequence-display">
+      Your Input: <span id="playerSequence">-</span>
+    </div>
+
+    <div class="button-grid">
+      ${colors.map(color => `
+        <button class="color-button ${color}" onclick="pressButton('${color}')">
+          ${color.toUpperCase()}
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="status" id="status">Ready to begin!</div>
+  </div>
+
+  <script>
+    const targetSequence = ${JSON.stringify(sequence)};
+    const authToken = "${authToken}";
+    let playerInput = [];
+
+    function pressButton(color) {
+      playerInput.push(color);
+      document.getElementById('playerSequence').textContent = playerInput.join(' → ');
+
+      // Check if input matches so far
+      for (let i = 0; i < playerInput.length; i++) {
+        if (playerInput[i] !== targetSequence[i]) {
+          document.getElementById('status').textContent = '❌ Wrong sequence! Try again.';
+          document.getElementById('status').style.color = '#e74c3c';
+          setTimeout(() => {
+            playerInput = [];
+            document.getElementById('playerSequence').textContent = '-';
+            document.getElementById('status').textContent = 'Ready to begin!';
+            document.getElementById('status').style.color = 'white';
+          }, 1500);
+          return;
+        }
+      }
+
+      // Check if complete
+      if (playerInput.length === targetSequence.length) {
+        document.getElementById('status').textContent = '✅ Success! Redirecting...';
+        document.getElementById('status').style.color = '#2ecc71';
+
+        // Complete the auth challenge
+        fetch('/authteam/complete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({authToken})
+        }).then(resp => resp.json())
+          .then(data => {
+            if (data.success) {
+              // Redirect to orders page
+              window.location.href = '/orders';
+            } else {
+              document.getElementById('status').textContent = '❌ Auth failed!';
+              document.getElementById('status').style.color = '#e74c3c';
+            }
+          });
+      }
+    }
+  </script>
+</body>
+</html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    console.warn(err);
+    res.status(500);
+    res.send({error: 'authteam generation failed'});
+  }
+});
+
+// Complete AuthTeam challenge
+app.post('/authteam/complete', async (req, res) => {
+  try {
+    const authToken = req.body.authToken;
+
+    if (!req.session.authChallenges || !req.session.authChallenges[authToken]) {
+      return res.send({success: false, error: 'Invalid auth token'});
+    }
+
+    const challenge = req.session.authChallenges[authToken];
+
+    // Check if expired
+    if (Date.now() > challenge.expires) {
+      delete req.session.authChallenges[authToken];
+      return res.send({success: false, error: 'Challenge expired'});
+    }
+
+    // Mark as completed and set session auth
+    challenge.completed = true;
+    req.session.ordersAuthenticated = true;
+    req.session.authTimestamp = Date.now();
+
+    res.send({success: true});
+  } catch (err) {
+    console.warn(err);
+    res.status(500);
+    res.send({error: 'auth completion failed'});
+  }
+});
+
+// Orders page (protected by authteam)
+app.get('/orders', async (req, res) => {
+  try {
+    // Check if authenticated
+    if (!req.session.ordersAuthenticated) {
+      return res.redirect('/authteam');
+    }
+
+    // Check if auth is still valid (1 hour)
+    if (Date.now() - req.session.authTimestamp > 3600000) {
+      req.session.ordersAuthenticated = false;
+      return res.redirect('/authteam');
+    }
+
+    // Get all orders from database
+    const allOrders = await db.getAllOrders();
+
+    // Generate orders HTML
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sanora Orders</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+    h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+    .orders-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .order-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .order-id {
+      font-size: 14px;
+      font-family: monospace;
+      color: #666;
+    }
+    .order-status {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-processing {
+      background: #cfe2ff;
+      color: #084298;
+    }
+    .status-shipped {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+    .status-delivered {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+    .status-cancelled {
+      background: #f8d7da;
+      color: #842029;
+    }
+    .order-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      font-size: 16px;
+      color: #333;
+      font-weight: 500;
+    }
+    .order-items {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .empty-state {
+      text-align: center;
+      color: white;
+      padding: 60px 20px;
+      font-size: 24px;
+    }
+    .refresh-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.2s;
+    }
+    .refresh-btn:hover {
+      transform: scale(1.1);
+    }
+    .address-section {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fff3cd;
+      border-radius: 8px;
+      border-left: 4px solid #ffc107;
+    }
+    .address-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #856404;
+      margin-bottom: 6px;
+    }
+    .address-text {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📦 Sanora Orders</h1>
+    <div class="subtitle">Order Management Dashboard</div>
+  </div>
+
+  <div class="orders-container">
+    ${allOrders && allOrders.length > 0 ? allOrders.map(order => {
+      const status = order.status || 'pending';
+      const items = order.items || [];
+      const shippingAddress = order.shippingAddress;
+
+      return `
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-id">Order #${order.orderId || order.uuid || 'N/A'}</div>
+            <div class="order-status status-${status}">${status.toUpperCase()}</div>
+          </div>
+
+          <div class="order-details">
+            <div class="detail-item">
+              <div class="detail-label">Customer</div>
+              <div class="detail-value">${order.userUUID ? order.userUUID.substring(0, 8) + '...' : 'N/A'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Total</div>
+              <div class="detail-value">$${order.total ? (order.total / 100).toFixed(2) : '0.00'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Date</div>
+              <div class="detail-value">${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Product</div>
+              <div class="detail-value">${order.productId || 'N/A'}</div>
+            </div>
+          </div>
+
+          ${shippingAddress ? `
+            <div class="address-section">
+              <div class="address-label">📮 SHIPPING ADDRESS</div>
+              <div class="address-text">
+                ${shippingAddress.recipientName || 'N/A'}<br>
+                ${shippingAddress.street || ''} ${shippingAddress.street2 || ''}<br>
+                ${shippingAddress.city || ''}, ${shippingAddress.state || ''} ${shippingAddress.zip || ''}<br>
+                ${shippingAddress.country || 'US'}
+                ${shippingAddress.phone ? '<br>📞 ' + shippingAddress.phone : ''}
+              </div>
+            </div>
+          ` : ''}
+
+          ${items.length > 0 ? `
+            <div class="order-items">
+              <strong>Items:</strong>
+              ${items.map(item => `<div>• ${item.name || item.title || 'Item'} (${item.quantity || 1}x)</div>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('') : `
+      <div class="empty-state">
+        📭 No orders yet
+      </div>
+    `}
+  </div>
+
+  <button class="refresh-btn" onclick="location.reload()">🔄</button>
+</body>
+</html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    console.warn(err);
+    res.status(500);
+    res.send({error: 'failed to load orders'});
+  }
+});
+
 // MAGIC Protocol endpoint
 app.post('/magic/spell/:spellName', async (req, res) => {
   try {

@@ -156,6 +156,37 @@ console.log('putting product', product);
     const ordersJSON = (await client.get(ordersKey)) || '[]';
 
     return JSON.parse(ordersJSON);
+  },
+
+  getAllOrders: async () => {
+    // Get all order keys from Redis
+    const files = (await client.getAll('order')) || '[]';
+
+    // Parse each order list and collect all orders
+    const allOrderLists = files.map(file => JSON.parse(file.content));
+
+    // Flatten the array of arrays into a single array
+    const allOrders = allOrderLists.flat();
+
+    // Deduplicate by orderId (since orders might be stored under multiple keys)
+    const uniqueOrders = [];
+    const seenOrderIds = new Set();
+
+    for (const order of allOrders) {
+      if (order.orderId && !seenOrderIds.has(order.orderId)) {
+        seenOrderIds.add(order.orderId);
+        uniqueOrders.push(order);
+      }
+    }
+
+    // Sort by createdAt (most recent first)
+    uniqueOrders.sort((a, b) => {
+      const aTime = a.createdAt || 0;
+      const bTime = b.createdAt || 0;
+      return bTime - aTime;
+    });
+
+    return uniqueOrders;
   }
 
 };
