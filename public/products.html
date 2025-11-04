@@ -550,12 +550,14 @@
                 const card = document.createElement('div');
                 card.className = 'product-card';
 
-                // Extract BDO SVG if available
+                // Extract BDO SVG if available - prioritize metadata.svgContent
                 let bdoHTML = '';
-                if (product.bdoSVG) {
-                    bdoHTML = `<div class="bdo-display">${product.bdoSVG}</div>`;
+                if (product.metadata && product.metadata.svgContent) {
+                    bdoHTML = `<div class="bdo-display">${product.metadata.svgContent}</div>`;
                 } else if (product.svgContent) {
                     bdoHTML = `<div class="bdo-display">${product.svgContent}</div>`;
+                } else if (product.bdoSVG) {
+                    bdoHTML = `<div class="bdo-display">${product.bdoSVG}</div>`;
                 } else {
                     bdoHTML = `<div class="bdo-display"><div style="font-size: 64px;">📦</div></div>`;
                 }
@@ -566,8 +568,8 @@
                 // Get category
                 const category = product.category || product.contentType || 'product';
 
-                // Get emojicode
-                const emojicode = product.emojicode || product.emojiShortcode || 'No emojicode';
+                // Get emojicode - prioritize metadata.emojicode
+                const emojicode = (product.metadata && product.metadata.emojicode) || product.emojicode || product.emojiShortcode || 'No emojicode';
 
                 card.innerHTML = `
                     <h3 class="product-title">${product.title || 'Untitled Product'}</h3>
