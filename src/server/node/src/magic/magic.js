@@ -477,14 +477,199 @@ const MAGIC = {
     }
   },
 
+  /**
+   * sanoraPurchaseProduct - Purchase a Sanora product and grant product nineum
+   *
+   * This spell handles product purchases by:
+   * 1. Validating payment has been processed
+   * 2. Retrieving product details including nineum flavor
+   * 3. Granting nineum to the purchaser via Fount
+   * 4. Recording the purchase in the order system
+   *
+   * Cost: 50 MP
+   *
+   * Expected spell components:
+   * - productId: Unique product identifier
+   * - paymentIntentId: Stripe payment intent ID (proof of payment)
+   * - price: Price paid in cents (verification)
+   * - sellerUUID: UUID of the product seller
+   * - galaxy: Galaxy to grant nineum in (optional, defaults to '00000000')
+   */
+  sanoraPurchaseProduct: async (spell) => {
+    try {
+      console.log('🪄 Sanora resolving sanoraPurchaseProduct spell');
+
+      const {
+        productId,
+        paymentIntentId,
+        price,
+        sellerUUID,
+        galaxy = '00000000'
+      } = spell.components;
+
+      // Validate required components
+      if (!productId || !paymentIntentId || !sellerUUID || price === undefined) {
+        return {
+          success: false,
+          error: 'Missing required spell components: productId, paymentIntentId, sellerUUID, price'
+        };
+      }
+
+      // Get the product from seller's account
+      const seller = await db.getUserByUUID(sellerUUID);
+      if (!seller) {
+        return {
+          success: false,
+          error: 'Seller not found'
+        };
+      }
+
+      const product = await db.getProduct(sellerUUID, productId);
+      if (!product) {
+        return {
+          success: false,
+          error: 'Product not found'
+        };
+      }
+
+      // Verify price matches
+      if (product.price !== price) {
+        return {
+          success: false,
+          error: `Price mismatch: expected ${product.price}, got ${price}`
+        };
+      }
+
+      // Get nineum flavor from product metadata
+      const nineumFlavor = product.nineumFlavor || product.metadata?.nineumFlavor;
+      if (!nineumFlavor) {
+        console.warn('⚠️ Product has no nineum flavor, skipping nineum grant');
+      }
+
+      // Grant nineum to purchaser via Fount
+      if (nineumFlavor) {
+        const FOUNT_URL = process.env.FOUNT_URL || 'http://localhost:3006/';
+
+        // Get caster's Fount UUID (assuming casterUUID is their Fount UUID)
+        const fountUUID = spell.casterUUID;
+
+        const nineumGrantPayload = {
+          timestamp: Date.now().toString(),
+          pubKey: spell.casterPubKey,
+          signature: spell.casterSignature,
+          spell: {
+            name: 'fountUserNineum',
+            components: {
+              uuid: fountUUID,
+              flavor: nineumFlavor,
+              galaxy: galaxy,
+              quantity: 1
+            },
+            casterUUID: spell.casterUUID,
+            casterPubKey: spell.casterPubKey,
+            casterSignature: spell.casterSignature
+          }
+        };
+
+        try {
+          const fountResponse = await fetch(`${FOUNT_URL}magic/spell/fountUserNineum`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nineumGrantPayload)
+          });
+
+          if (!fountResponse.ok) {
+            const error = await fountResponse.text();
+            console.error('  ❌ Nineum grant failed:', error);
+            return {
+              success: true,
+              warning: `Purchase succeeded but nineum grant failed: ${error}`,
+              product,
+              paymentIntentId
+            };
+          }
+
+          const fountResult = await fountResponse.json();
+          console.log(`  ✅ Nineum granted to purchaser (flavor: ${nineumFlavor})`);
+
+        } catch (error) {
+          console.error('  ❌ Nineum grant request failed:', error);
+          return {
+            success: true,
+            warning: `Purchase succeeded but nineum grant failed: ${error.message}`,
+            product,
+            paymentIntentId
+          };
+        }
+      }
+
+      // Record the order
+      const order = {
+        orderId: `order_${Date.now()}`,
+        userUUID: spell.casterUUID,
+        productId: productId,
+        productTitle: product.title,
+        price: price,
+        paymentIntentId: paymentIntentId,
+        sellerUUID: sellerUUID,
+        status: 'completed',
+        createdAt: Date.now(),
+        nineumGranted: !!nineumFlavor,
+        nineumFlavor: nineumFlavor || null
+      };
+
+      const purchaser = await db.getUserByUUID(spell.casterUUID);
+      if (purchaser) {
+        await db.updateOrder(purchaser, order);
+      }
+
+      return {
+        success: true,
+        product: {
+          productId: product.productId,
+          title: product.title,
+          price: product.price,
+          category: product.category
+        },
+        order: {
+          orderId: order.orderId,
+          paymentIntentId: paymentIntentId,
+          status: 'completed'
+        },
+        nineum: nineumFlavor ? {
+          granted: true,
+          flavor: nineumFlavor,
+          galaxy: galaxy
+        } : {
+          granted: false,
+          reason: 'No nineum flavor configured for this product'
+        },
+        message: 'Product purchased successfully' + (nineumFlavor ? ' and nineum granted' : '')
+      };
+
+    } catch (error) {
+      console.error('❌ sanoraPurchaseProduct spell failed:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+
   gatewayForSpell: async (spellName) => {
     const keys = await db.getKeys();
     const user = await db.getUserByPublicKey(keys.pubKey);
 
+    // Spell cost mapping
+    const spellCosts = {
+      'enchant-product': 200,        // Create product with BDO
+      'sanoraPurchaseProduct': 50,   // Purchase product and grant nineum
+    };
+
     const gateway = {
       timestamp: Date.now().toString(),
       uuid: user.uuid,
-      minimumCost: spellName === 'enchant-product' ? 200 : 20, // enchant-product costs 200 MP
+      minimumCost: spellCosts[spellName] || 20, // Default 20 MP for other spells
       ordinal: user.ordinal || 0
     };
 
