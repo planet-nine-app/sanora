@@ -118,15 +118,31 @@ app.put('/user/create', async (req, res) => {
       return res.send({error: 'auth error'});
     }
 
-    const resp = await fetch(`${addie.baseURL}user/create`, {
-      method: 'put',
-      body: JSON.stringify(req.body),
-      headers: {'Content-Type': 'application/json'}
-    });
- 
-    const newAddieUser = await resp.json();
+    // Check if user already exists with this pubKey
+    let foundUser;
+    try {
+      foundUser = await db.getUserByPublicKey(pubKey);
+    }
+    catch(err) {
+      console.log('no user found. Creating a new one');
+    }
 
-    const foundUser = await db.putUser({ pubKey, addieUser: newAddieUser, basePubKey });
+    // If user doesn't exist, create new one
+    if(!foundUser) {
+      const resp = await fetch(`${addie.baseURL}user/create`, {
+        method: 'put',
+        body: JSON.stringify(req.body),
+        headers: {'Content-Type': 'application/json'}
+      });
+
+      const newAddieUser = await resp.json();
+
+      foundUser = await db.putUser({ pubKey, addieUser: newAddieUser, basePubKey });
+      console.log('Created new user:', foundUser.uuid);
+    } else {
+      console.log('Found existing user:', foundUser.uuid);
+    }
+
     res.send(foundUser);
   } catch(err) {
 console.warn(err);
