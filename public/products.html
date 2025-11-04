@@ -357,6 +357,9 @@
         // User authentication state
         let currentUser = null;
 
+        // Store products globally to avoid passing large objects in onclick
+        let productsStore = [];
+
         // Initialize user authentication
         async function initializeUser() {
             try {
@@ -451,7 +454,12 @@
         }
 
         // Share product
-        async function shareProduct(product) {
+        async function shareProduct(productIndex) {
+            const product = productsStore[productIndex];
+            if (!product) {
+                showToast('Product not found', 'error');
+                return;
+            }
             console.log('🔗 Share button clicked for:', product.title);
 
             // Check if user is authenticated
@@ -543,10 +551,13 @@
                 return;
             }
 
+            // Store products globally
+            productsStore = products;
+
             grid.style.display = 'grid';
             grid.innerHTML = '';
 
-            products.forEach(product => {
+            products.forEach((product, index) => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
 
@@ -582,7 +593,7 @@
                         <span class="product-category">📂 ${category}</span>
                         <span class="product-price">${price}</span>
                     </div>
-                    <button class="share-button" onclick='shareProduct(${JSON.stringify(product).replace(/'/g, "\\'")})'>
+                    <button class="share-button" onclick="shareProduct(${index})">
                         <span>🔗</span>
                         <span>Share & Earn</span>
                     </button>
