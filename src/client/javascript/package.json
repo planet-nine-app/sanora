@@ -1,6 +1,6 @@
 {
   "name": "sanora-js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "JavaScript client SDK for Sanora - Planet Nine product and commerce service",
   "main": "sanora.js",
   "type": "module",

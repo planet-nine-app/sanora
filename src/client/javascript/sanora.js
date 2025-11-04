@@ -203,7 +203,7 @@ class Sanora {
   async addProduct(uuid, product) {
     const keys = await this.sessionless.getKeys();
     const timestamp = Date.now().toString();
-    const message = timestamp + uuid + product.title;
+    const message = timestamp + uuid + product.title + product.description + product.price;
     const signature = await this.sessionless.sign(message);
 
     return await this.put(`/user/${uuid}/product/${encodeURIComponent(product.title)}`, {
