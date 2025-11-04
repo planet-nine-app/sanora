@@ -206,7 +206,7 @@ class Sanora {
     const message = timestamp + uuid + product.title;
     const signature = await this.sessionless.sign(message);
 
-    return await this.put(`/user/${uuid}/product`, {
+    return await this.put(`/user/${uuid}/product/${encodeURIComponent(product.title)}`, {
       timestamp,
       signature,
       ...product
