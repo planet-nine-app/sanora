@@ -588,6 +588,41 @@ console.warn(err);
   }
 });
 
+// Failed order logging endpoint
+app.put('/user/orders/failed', async (req, res) => {
+  try {
+    const timestamp = req.body.timestamp;
+    const failedOrder = req.body.failedOrder;
+
+    if(!req.session || !req.session.uuid) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    const foundUser = await db.getUserByUUID(req.session.uuid);
+    if(!foundUser) {
+      res.status(403);
+      return res.send({error: 'auth error'});
+    }
+
+    // Store failed order with error details from Stripe
+    failedOrder.userUUID = req.session.uuid;
+    failedOrder.status = 'failed';
+    failedOrder.createdAt = Date.now();
+    failedOrder.orderId = sessionless.generateUUID();
+
+    console.log(`❌ Failed order logged: ${failedOrder.errorCode} - ${failedOrder.errorMessage}`);
+
+    await db.putOrder(foundUser, failedOrder);
+
+    res.send({success: true});
+  } catch(err) {
+    console.warn(err);
+    res.status(404);
+    res.send({error: 'not found'});
+  }
+});
+
 app.get('/user/:uuid/orders/:productId', async (req, res) => {
   try {
     const uuid = req.params.uuid;
@@ -1195,6 +1230,10 @@ app.get('/orders', async (req, res) => {
       background: #f8d7da;
       color: #842029;
     }
+    .status-failed {
+      background: #f8d7da;
+      color: #842029;
+    }
     .order-details {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1341,6 +1380,209 @@ app.get('/orders', async (req, res) => {
     console.warn(err);
     res.status(500);
     res.send({error: 'failed to load orders'});
+  }
+});
+
+// Create affiliate product endpoint
+app.post('/products/:productId/create-affiliate', async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const timestamp = req.body.timestamp;
+    const pubKey = req.body.pubKey;
+    const signature = req.body.signature;
+
+    const message = timestamp + pubKey + productId;
+
+    // Verify signature
+    if (!signature || !sessionless.verifySignature(signature, message, pubKey)) {
+      res.status(403);
+      return res.send({ error: 'Authentication error' });
+    }
+
+    console.log(`🔗 Creating affiliate product for: ${productId}`);
+
+    // Get original product
+    const allProducts = await db.getProductsForBase();
+    let originalProduct = null;
+
+    // Find the product by productId
+    for (const userProducts of allProducts) {
+      for (const product of Object.values(userProducts)) {
+        if (product.productId === productId) {
+          originalProduct = product;
+          break;
+        }
+      }
+      if (originalProduct) break;
+    }
+
+    if (!originalProduct) {
+      res.status(404);
+      return res.send({ error: 'Product not found' });
+    }
+
+    // Get or create affiliate user
+    let affiliateUser = await db.getUserByPublicKey(pubKey);
+    if (!affiliateUser) {
+      affiliateUser = await db.putUser({ pubKey, basePubKey });
+    }
+
+    // Construct Addie URL based on environment
+    const SUBDOMAIN = process.env.SUBDOMAIN || 'dev';
+    const addieURL = process.env.LOCALHOST ? 'http://127.0.0.1:3005/' : `https://${SUBDOMAIN}.addie.allyabase.com/`;
+
+    // Get original product's BDO if it exists
+    let bdoPubKey = originalProduct.bdoPubKey || originalProduct.metadata?.bdoPubKey;
+    let originalBDO = null;
+    let payees = [];
+
+    if (bdoPubKey) {
+      try {
+        console.log(`  📦 Fetching original BDO: ${bdoPubKey.substring(0, 16)}...`);
+
+        const BDO_URL = process.env.BDO_URL || 'http://127.0.0.1:3003/';
+        const bdoResponse = await fetch(`${BDO_URL}user/${originalProduct.uuid}/bdo?timestamp=${timestamp}&pubKey=${bdoPubKey}`);
+
+        if (bdoResponse.ok) {
+          originalBDO = await bdoResponse.json();
+          console.log(`  ✅ Original BDO fetched`);
+
+          // Extract existing payees if they exist
+          if (originalBDO.bdo && originalBDO.bdo.payees && Array.isArray(originalBDO.bdo.payees)) {
+            payees = [...originalBDO.bdo.payees];
+            console.log(`  💰 Found ${payees.length} existing payees`);
+          }
+        }
+      } catch (error) {
+        console.warn(`  ⚠️ Could not fetch original BDO: ${error.message}`);
+      }
+    }
+
+    // Add affiliate user to payees array with 9% commission
+    payees.push({
+      pubKey: pubKey,
+      addieURL: addieURL,
+      percent: 0.09 // 9% commission for affiliate
+    });
+
+    console.log(`  💰 Added affiliate to payees: 9% commission`);
+
+    // Create affiliate product with commission structure
+    const affiliateProductId = `affiliate_${productId}_${sessionless.generateUUID().substring(0, 8)}`;
+
+    const affiliateProduct = {
+      ...originalProduct,
+      productId: affiliateProductId,
+      title: originalProduct.title,
+      description: originalProduct.description,
+      price: originalProduct.price,
+      category: originalProduct.category,
+      tags: originalProduct.tags,
+      metadata: {
+        ...(originalProduct.metadata || {}),
+        affiliateType: 'referral',
+        originalProductId: productId,
+        originalSeller: originalProduct.uuid,
+        affiliateUser: affiliateUser.uuid,
+        affiliatePubKey: pubKey,
+        commissionRate: 0.09 // 9% commission
+      }
+    };
+
+    // Create new BDO with updated payees array
+    let newBDOPubKey = null;
+    let affiliateEmojicode = null;
+
+    if (originalBDO) {
+      try {
+        console.log(`  🔄 Creating new BDO with updated payees`);
+
+        // Generate new keys for the affiliate BDO
+        const companionKeys = await sessionless.generateKeys(
+          (keys) => {},
+          () => null
+        );
+
+        if (companionKeys && companionKeys.pubKey) {
+          const bdoTimestamp = Date.now().toString();
+          const hash = '';
+
+          // Create new BDO data with updated payees
+          const newBDOData = {
+            ...originalBDO.bdo,
+            payees: payees, // Updated payees array
+            metadata: {
+              ...(originalBDO.bdo.metadata || {}),
+              affiliateProductId: affiliateProductId,
+              originalBDOPubKey: bdoPubKey,
+              createdForAffiliate: true,
+              affiliatePubKey: pubKey
+            }
+          };
+
+          const messageToSign = bdoTimestamp + hash + companionKeys.pubKey;
+
+          // Sign with the companion private key directly
+          const bdoSignature = await sessionless.sign(messageToSign, companionKeys.privateKey);
+
+          const bdoPayload = {
+            timestamp: bdoTimestamp,
+            hash,
+            pubKey: companionKeys.pubKey,
+            signature: bdoSignature,
+            public: true,
+            bdo: newBDOData
+          };
+
+          const BDO_URL = process.env.BDO_URL || 'http://127.0.0.1:3003/';
+          const createBDOResponse = await fetch(`${BDO_URL}user/create`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bdoPayload)
+          });
+
+          if (createBDOResponse.ok) {
+            const bdoResult = await createBDOResponse.json();
+            newBDOPubKey = companionKeys.pubKey;
+            affiliateEmojicode = bdoResult.emojiShortcode;
+
+            // Update affiliate product with new BDO reference
+            affiliateProduct.bdoPubKey = newBDOPubKey;
+            affiliateProduct.emojicode = affiliateEmojicode;
+
+            console.log(`  ✅ New BDO created: ${affiliateEmojicode}`);
+            console.log(`  🔑 BDO PubKey: ${newBDOPubKey.substring(0, 16)}...`);
+          }
+        }
+      } catch (error) {
+        console.warn(`  ⚠️ Failed to create new BDO: ${error.message}`);
+      }
+    }
+
+    // Save affiliate product
+    await db.putProduct(affiliateUser, affiliateProduct);
+
+    console.log(`✅ Affiliate product created: ${affiliateProductId}`);
+
+    // Use the new affiliate emojicode, or fallback
+    if (!affiliateEmojicode) {
+      affiliateEmojicode = originalProduct.emojicode || `📦${affiliateProductId.substring(0, 8)}`;
+    }
+
+    res.send({
+      success: true,
+      affiliateProductId: affiliateProductId,
+      affiliateEmojicode: affiliateEmojicode,
+      commissionRate: 0.09, // 9% as requested
+      originalProductId: productId,
+      bdoPubKey: newBDOPubKey,
+      payeesCount: payees.length
+    });
+
+  } catch (error) {
+    console.error('❌ Failed to create affiliate product:', error);
+    res.status(500);
+    res.send({ error: error.message || 'Failed to create affiliate product' });
   }
 });
 

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Nine Marketplace - Sanora</title>
+    <style>
+        :root {
+            /* Planet Nine Colors (matching The Advancement) */
+            --primary: #9b59b6;      /* Purple */
+            --secondary: #27ae60;    /* Green */
+            --tertiary: #e91e63;     /* Pink */
+            --quaternary: #f1c40f;   /* Yellow */
+            --cancel: #e74c3c;       /* Red */
+            --inactive: #95a5a6;     /* Gray */
+
+            /* Theme colors */
+            --background: #ffffff;
+            --surface: #f8f9fa;
+            --border: #e9ecef;
+            --text: #2c3e50;
+            --text-secondary: #6c757d;
+            --shadow: rgba(0, 0, 0, 0.1);
+
+            /* Typography */
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            color: var(--text);
+            background: var(--background);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--tertiary));
+            color: white;
+            padding: 32px 20px;
+            box-shadow: 0 2px 8px var(--shadow);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            font-size: 48px;
+            animation: spin 2s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 32px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .product-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .product-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .bdo-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .bdo-display svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .emojicode-section {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(233, 30, 99, 0.1));
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .emojicode-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .emojicode-value {
+            font-size: 24px;
+            line-height: 1.4;
+            word-break: break-all;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .emojicode-value:hover {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .product-category {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--secondary);
+            text-transform: capitalize;
+        }
+
+        .product-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .share-button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--secondary), #229954);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+
+        .share-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+        }
+
+        .share-button:active {
+            transform: translateY(0);
+        }
+
+        .share-button:disabled {
+            background: var(--inactive);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px var(--shadow);
+            animation: slideInRight 0.3s ease;
+            max-width: 350px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.success {
+            border-color: var(--secondary);
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .toast.error {
+            border-color: var(--cancel);
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .toast.info {
+            border-color: var(--primary);
+            background: rgba(155, 89, 182, 0.1);
+        }
+
+        .toast-icon {
+            font-size: 24px;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>🌍 Planet Nine Marketplace</h1>
+        <p>Discover and share amazing digital products</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-state">
+            <div class="loading-spinner">⏳</div>
+            <p>Loading products from Sanora...</p>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="products-grid" class="products-grid" style="display: none;">
+            <!-- Products will be loaded here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">📦</div>
+            <h3>No Products Yet</h3>
+            <p>Check back soon for amazing digital products!</p>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="https://unpkg.com/sessionless-node@latest/dist/sessionless.min.js"></script>
+    <script>
+        // Configuration
+        const SANORA_URL = window.location.origin;
+
+        // User authentication state
+        let currentUser = null;
+
+        // Initialize user authentication
+        async function initializeUser() {
+            try {
+                // Check if user keys exist in localStorage
+                const storedKeys = localStorage.getItem('planet_nine_keys');
+
+                if (storedKeys) {
+                    const keys = JSON.parse(storedKeys);
+                    currentUser = { keys };
+                    console.log('✅ Loaded existing user keys');
+                } else {
+                    // Generate new sessionless keys
+                    const saveKeys = (keys) => {
+                        localStorage.setItem('planet_nine_keys', JSON.stringify(keys));
+                        currentUser = { keys };
+                        console.log('✅ Generated new user keys');
+                    };
+
+                    const getKeys = () => {
+                        const stored = localStorage.getItem('planet_nine_keys');
+                        return stored ? JSON.parse(stored) : null;
+                    };
+
+                    await sessionless.generateKeys(saveKeys, getKeys);
+                }
+
+                // Create Sanora user if needed
+                await ensureSanoraUser();
+
+            } catch (error) {
+                console.error('❌ Failed to initialize user:', error);
+                showToast('Failed to initialize user authentication', 'error');
+            }
+        }
+
+        // Ensure user exists in Sanora
+        async function ensureSanoraUser() {
+            if (!currentUser || !currentUser.keys) return;
+
+            try {
+                const timestamp = new Date().getTime().toString();
+                const message = timestamp + currentUser.keys.pubKey;
+                const signature = await sessionless.sign(message);
+
+                const response = await fetch(`${SANORA_URL}/user/create`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        timestamp,
+                        pubKey: currentUser.keys.pubKey,
+                        signature
+                    })
+                });
+
+                const user = await response.json();
+                currentUser.uuid = user.uuid;
+                console.log('✅ Sanora user ready:', user.uuid);
+
+            } catch (error) {
+                console.warn('⚠️ Could not create Sanora user:', error.message);
+            }
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => container.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Copy emojicode to clipboard
+        function copyEmojicode(emojicode) {
+            navigator.clipboard.writeText(emojicode).then(() => {
+                showToast('Emojicode copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                showToast('Failed to copy emojicode', 'error');
+            });
+        }
+
+        // Share product
+        async function shareProduct(product) {
+            console.log('🔗 Share button clicked for:', product.title);
+
+            // Check if user is authenticated
+            if (!currentUser || !currentUser.keys) {
+                showToast('Initializing authentication...', 'info');
+                await initializeUser();
+
+                if (!currentUser || !currentUser.keys) {
+                    showToast('Authentication required to create affiliate link', 'error');
+                    return;
+                }
+            }
+
+            try {
+                // Show loading state
+                showToast('Creating affiliate product...', 'info');
+
+                // Create affiliate product via backend
+                const timestamp = new Date().getTime().toString();
+                const message = timestamp + currentUser.keys.pubKey + product.productId;
+                const signature = await sessionless.sign(message);
+
+                const response = await fetch(`${SANORA_URL}/products/${product.productId}/create-affiliate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        timestamp,
+                        pubKey: currentUser.keys.pubKey,
+                        signature,
+                        originalProductId: product.productId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const affiliateEmojicode = result.affiliateEmojicode;
+
+                    console.log('✅ Affiliate product created:', affiliateEmojicode);
+
+                    // Use Web Share API with affiliate emojicode
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: product.title,
+                                text: `Check out this product on Planet Nine: ${product.title}\n\nEmojicode: ${affiliateEmojicode}\n\n(You'll earn 10% commission on sales!)`,
+                                url: window.location.href
+                            });
+                            showToast('Affiliate product shared successfully!', 'success');
+                        } catch (err) {
+                            if (err.name !== 'AbortError') {
+                                console.error('Share failed:', err);
+                                // Fallback to copy
+                                copyEmojicode(affiliateEmojicode);
+                                showToast('Affiliate emojicode copied! Share it to earn 10% commission.', 'success');
+                            }
+                        }
+                    } else {
+                        // Fallback for browsers without Web Share API
+                        copyEmojicode(affiliateEmojicode);
+                        showToast('Affiliate emojicode copied! Share it to earn 10% commission.', 'success');
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to create affiliate product');
+                }
+
+            } catch (error) {
+                console.error('❌ Failed to create affiliate product:', error);
+                showToast('Failed to create affiliate link: ' + error.message, 'error');
+
+                // Fallback to sharing original emojicode
+                if (product.emojicode) {
+                    copyEmojicode(product.emojicode);
+                    showToast('Copied original emojicode as fallback', 'info');
+                }
+            }
+        }
+
+        // Render products
+        function renderProducts(products) {
+            const grid = document.getElementById('products-grid');
+            const loading = document.getElementById('loading-state');
+            const empty = document.getElementById('empty-state');
+
+            loading.style.display = 'none';
+
+            if (!products || products.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            grid.innerHTML = '';
+
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+
+                // Extract BDO SVG if available
+                let bdoHTML = '';
+                if (product.bdoSVG) {
+                    bdoHTML = `<div class="bdo-display">${product.bdoSVG}</div>`;
+                } else if (product.svgContent) {
+                    bdoHTML = `<div class="bdo-display">${product.svgContent}</div>`;
+                } else {
+                    bdoHTML = `<div class="bdo-display"><div style="font-size: 64px;">📦</div></div>`;
+                }
+
+                // Format price
+                const price = product.price ? `$${(product.price / 100).toFixed(2)}` : 'Free';
+
+                // Get category
+                const category = product.category || product.contentType || 'product';
+
+                // Get emojicode
+                const emojicode = product.emojicode || product.emojiShortcode || 'No emojicode';
+
+                card.innerHTML = `
+                    <h3 class="product-title">${product.title || 'Untitled Product'}</h3>
+                    ${bdoHTML}
+                    <div class="emojicode-section" onclick="copyEmojicode('${emojicode}')">
+                        <div class="emojicode-label">Emojicode (click to copy)</div>
+                        <div class="emojicode-value">${emojicode}</div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">📂 ${category}</span>
+                        <span class="product-price">${price}</span>
+                    </div>
+                    <button class="share-button" onclick='shareProduct(${JSON.stringify(product).replace(/'/g, "\\'")})'>
+                        <span>🔗</span>
+                        <span>Share & Earn</span>
+                    </button>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            console.log(`✅ Rendered ${products.length} products`);
+        }
+
+        // Fetch products from Sanora
+        async function loadProducts() {
+            console.log('📡 Fetching products from Sanora...');
+
+            try {
+                const response = await fetch(`${SANORA_URL}/products/base`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('📦 Products data:', data);
+
+                // Flatten products array
+                let allProducts = [];
+                if (Array.isArray(data)) {
+                    // data is array of user product objects
+                    data.forEach(userProducts => {
+                        if (typeof userProducts === 'object') {
+                            Object.values(userProducts).forEach(product => {
+                                if (product && product.title) {
+                                    allProducts.push(product);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                console.log(`✅ Loaded ${allProducts.length} products`);
+                renderProducts(allProducts);
+
+            } catch (error) {
+                console.error('❌ Failed to load products:', error);
+                document.getElementById('loading-state').innerHTML = `
+                    <div class="loading-spinner">❌</div>
+                    <p>Failed to load products. Please try again later.</p>
+                `;
+                showToast('Failed to load products from Sanora', 'error');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🌍 Planet Nine Marketplace initialized');
+            await initializeUser();
+            loadProducts();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "name": "sanora-js",
+  "version": "1.0.0",
+  "description": "JavaScript client SDK for Sanora - Planet Nine product and commerce service",
+  "main": "sanora.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "planet-nine",
+    "sanora",
+    "commerce",
+    "products",
+    "sessionless",
+    "allyabase"
+  ],
+  "author": "Planet Nine",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^3.3.0",
+    "sessionless-node": "^0.8.16"
+  },
+  "peerDependencies": {
+    "sessionless-node": "^0.8.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/planet-nine-app/planet-nine"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

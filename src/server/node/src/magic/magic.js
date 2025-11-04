@@ -3,7 +3,8 @@ import db from '../persistence/db.js';
 
 sessionless.generateKeys(() => {}, db.getKeys);
 
-const BDO_URL = process.env.BDO_URL || 'http://127.0.0.1:3003/';
+// Use localhost for BDO service (same container in allyabase)
+const BDO_URL = process.env.BDO_URL || 'http://localhost:3003/';
 
 const MAGIC = {
   /**
@@ -125,13 +126,8 @@ const MAGIC = {
 
       const messageToSign = timestamp + hash + companionKeys.pubKey;
 
-      // Sign with the companion keys
-      const savedCurrentKeys = sessionless.getKeys();
-      sessionless.saveKeys(companionKeys); // Temporarily set companion keys for signing
-      const signature = await sessionless.sign(messageToSign);
-      if (savedCurrentKeys) {
-        sessionless.saveKeys(savedCurrentKeys); // Restore original keys
-      }
+      // Sign with the companion private key directly
+      const signature = await sessionless.sign(messageToSign, companionKeys.privateKey);
 
       const bdoPayload = {
         timestamp,
