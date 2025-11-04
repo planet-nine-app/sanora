@@ -221,6 +221,41 @@
             box-shadow: none;
         }
 
+        .purchase-button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--tertiary));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+            margin-top: 12px;
+        }
+
+        .purchase-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(155, 89, 182, 0.4);
+        }
+
+        .purchase-button:active {
+            transform: translateY(0);
+        }
+
+        .purchase-button:disabled {
+            background: var(--inactive);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .empty-state {
             text-align: center;
             padding: 80px 20px;
@@ -597,6 +632,10 @@
                         <span>🔗</span>
                         <span>Share & Earn</span>
                     </button>
+                    <button class="purchase-button" onclick="purchaseProduct(${index})">
+                        <span>💳</span>
+                        <span>Purchase - ${price}</span>
+                    </button>
                 `;
 
                 grid.appendChild(card);
@@ -645,6 +684,179 @@
                 `;
                 showToast('Use AdvanceKey for this feature', 'error');
             }
+        }
+
+        // Purchase product
+        async function purchaseProduct(productIndex) {
+            const product = productsStore[productIndex];
+            if (!product) {
+                showToast('Product not found', 'error');
+                return;
+            }
+
+            console.log('💳 Purchase button clicked for:', product.title);
+
+            // Check if user is authenticated
+            if (!currentUser || !currentUser.keys) {
+                showToast('Initializing authentication...', 'info');
+                await initializeUser();
+
+                if (!currentUser || !currentUser.keys) {
+                    showToast('Use AdvanceKey for this feature', 'error');
+                    return;
+                }
+            }
+
+            try {
+                showToast('Processing purchase...', 'info');
+
+                // Get BDO pubKey to fetch payees
+                const bdoPubKey = product.metadata?.bdoPubKey || product.bdoPubKey;
+                if (!bdoPubKey) {
+                    throw new Error('Product BDO not found');
+                }
+
+                // Determine BDO URL based on environment
+                const BDO_URL = window.location.origin.replace('7243', '3003');
+
+                // Fetch BDO with payees
+                const timestamp = new Date().getTime().toString();
+                const bdoResponse = await fetch(`${BDO_URL}/user/${product.uuid}/bdo?timestamp=${timestamp}&pubKey=${bdoPubKey}`);
+
+                if (!bdoResponse.ok) {
+                    throw new Error('Failed to fetch product details');
+                }
+
+                const bdoData = await bdoResponse.json();
+                const payees = bdoData.bdo?.payees || [];
+
+                console.log('💳 Found payees:', payees);
+
+                // Verify payees and get Addie user info
+                const verifiedPayees = await verifyPayees(payees);
+
+                console.log('✅ Verified payees:', verifiedPayees);
+
+                if (verifiedPayees.length === 0) {
+                    throw new Error('No valid payees found');
+                }
+
+                // Create Addie user if needed
+                const ADDIE_URL = window.location.origin.replace('7243', '3005');
+                let addieUser = currentUser.addieUser;
+
+                if (!addieUser) {
+                    console.log('  👤 Creating Addie user...');
+                    const createTimestamp = new Date().getTime().toString();
+                    const createMessage = createTimestamp + currentUser.keys.pubKey;
+                    const createSignature = await sessionless.sign(createMessage);
+
+                    const createResponse = await fetch(`${ADDIE_URL}/user/create`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            timestamp: createTimestamp,
+                            pubKey: currentUser.keys.pubKey,
+                            signature: createSignature
+                        })
+                    });
+
+                    if (!createResponse.ok) {
+                        throw new Error('Failed to create payment user');
+                    }
+
+                    addieUser = await createResponse.json();
+                    currentUser.addieUser = addieUser;
+                    console.log('  ✅ Addie user created:', addieUser.uuid);
+                }
+
+                // Create payment intent directly through Addie with verified payees
+                console.log(`  💳 Creating payment intent through Addie...`);
+
+                const intentTimestamp = new Date().getTime().toString();
+                const intentMessage = intentTimestamp + addieUser.uuid + product.price + 'usd';
+                const intentSignature = await sessionless.sign(intentMessage);
+
+                const intentPayload = {
+                    timestamp: intentTimestamp,
+                    uuid: addieUser.uuid,
+                    amount: product.price,
+                    currency: 'usd',
+                    signature: intentSignature,
+                    payees: verifiedPayees.map(p => ({
+                        pubKey: p.pubKey,
+                        amount: Math.floor(product.price * p.percent / 100)
+                    }))
+                };
+
+                console.log(`  📤 Sending to Addie: ${ADDIE_URL}/user/${addieUser.uuid}/processor/stripe/intent`);
+
+                const intentResponse = await fetch(`${ADDIE_URL}/user/${addieUser.uuid}/processor/stripe/intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(intentPayload)
+                });
+
+                if (!intentResponse.ok) {
+                    const errorText = await intentResponse.text();
+                    console.error(`  ❌ Addie error: ${errorText}`);
+                    throw new Error('Failed to create payment intent');
+                }
+
+                const paymentIntent = await intentResponse.json();
+
+                if (paymentIntent.clientSecret) {
+                    console.log('  ✅ Payment intent created:', paymentIntent.clientSecret.substring(0, 20) + '...');
+                    showToast('Payment ready! (Stripe integration pending)', 'success');
+                    // TODO: Implement Stripe payment flow with clientSecret
+                } else {
+                    throw new Error('No client secret received');
+                }
+
+            } catch (error) {
+                console.error('❌ Purchase failed:', error);
+                showToast('Use AdvanceKey for this feature', 'error');
+            }
+        }
+
+        // Verify payees through Addie
+        async function verifyPayees(payees) {
+            const verified = [];
+            const ADDIE_URL = window.location.origin.replace('7243', '3005');
+
+            for (const payee of payees) {
+                try {
+                    // Call Addie directly to verify signature and get user info
+                    const response = await fetch(`${ADDIE_URL}/verify-payee`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            pubKey: payee.pubKey,
+                            addieURL: payee.addieURL,
+                            percent: payee.percent,
+                            signature: payee.signature
+                        })
+                    });
+
+                    if (!response.ok) {
+                        console.warn('⚠️ Failed to verify payee:', payee.pubKey.substring(0, 16) + '...');
+                        continue;
+                    }
+
+                    const result = await response.json();
+                    verified.push({
+                        pubKey: payee.pubKey,
+                        addieURL: payee.addieURL,
+                        percent: payee.percent,
+                        addieUser: result.addieUser
+                    });
+
+                } catch (error) {
+                    console.error('❌ Error verifying payee:', error);
+                }
+            }
+
+            return verified;
         }
 
         // Initialize
