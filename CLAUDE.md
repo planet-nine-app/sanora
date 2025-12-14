@@ -87,5 +87,44 @@ npm run test:sanora:orders
 
 **Test Coverage**: 32 tests covering AuthTeam, session management, orders display, shipping addresses, and security.
 
+## Feed Endpoints (November 2025)
+
+Sanora now serves federated feeds for digital artifacts following modern syndication specs.
+
+### Feed Types
+
+- **Libris** (Books) - Based on Canimus specification
+- **Scribus** (Blog Posts) - Based on Canimus specification
+- **Canimus** (Music) - Original Canimus specification
+
+### Feed Endpoints
+
+- `GET /feeds/books/:uuid` - Get Libris feed for user's books
+- `GET /feeds/posts/:uuid` - Get Scribus feed for user's blog posts
+- `GET /feeds/music/:uuid` - Get Canimus feed for user's music
+- `GET /feeds/all/:uuid` - Get combined feed (all types)
+- `GET /feeds/base` - Get base feed (all products from all users)
+
+### Auto-categorization
+
+Products are automatically categorized by:
+- File extensions of artifacts (`.epub` = book, `.mp3` = music, `.md` = post)
+- Category field (`book`, `music`, `blog`, etc.)
+- Title keywords
+
+### Feed Specifications
+
+- [Libris Specification](../../specs/libris.md)
+- [Scribus Specification](../../specs/scribus.md)
+- [Canimus Specification](https://github.com/PlaidWeb/Canimus)
+
+### Example
+
+```bash
+curl http://localhost:7243/feeds/books/{user-uuid}
+```
+
+Returns a Libris-compliant JSON feed with all book products for that user.
+
 ## Last Updated
-October 24, 2025 - Added orders webpage with AuthTeam authentication and comprehensive Sharon tests. Completed full MAGIC protocol conversion. All 4 routes now accessible via MAGIC spells with centralized Fount authentication.
+November 13, 2025 - Added federated feed endpoints (Libris, Scribus, Canimus) for serving digital artifacts as syndicated feeds. October 24, 2025 - Added orders webpage with AuthTeam authentication and comprehensive Sharon tests. Completed full MAGIC protocol conversion. All 4 routes now accessible via MAGIC spells with centralized Fount authentication.

@@ -1608,6 +1608,369 @@ app.post('/products/:productId/create-affiliate', async (req, res) => {
   }
 });
 
+// ========================================
+// Feed Endpoints (Libris, Scribus, Canimus)
+// ========================================
+
+// Helper function to categorize product by type
+function getProductType(product) {
+  const title = (product.title || '').toLowerCase();
+  const description = (product.description || '').toLowerCase();
+  const category = (product.category || '').toLowerCase();
+
+  // Check artifacts for file extensions
+  const artifacts = product.artifacts || [];
+  const hasEbook = artifacts.some(a => /\.(epub|pdf|mobi|azw3)$/i.test(a));
+  const hasMusic = artifacts.some(a => /\.(mp3|flac|m4a|ogg|wav)$/i.test(a));
+  const hasBlog = artifacts.some(a => /\.(md|html)$/i.test(a));
+
+  // Categorize based on artifacts and metadata
+  if (hasEbook || category.includes('book') || title.includes('book') || category.includes('ebook')) {
+    return 'book';
+  }
+  if (hasMusic || category.includes('music') || category.includes('album') || category.includes('track')) {
+    return 'music';
+  }
+  if (hasBlog || category.includes('blog') || category.includes('post') || category.includes('article')) {
+    return 'post';
+  }
+
+  // Default to post for text content
+  return 'post';
+}
+
+// Helper function to convert product to Libris book format
+function productToLibrisBook(product, baseUrl) {
+  const book = {
+    type: 'book',
+    name: product.title,
+    url: `${baseUrl}/products/${product.uuid}/${encodeURIComponent(product.title)}`,
+    uid: product.productId || product.uuid,
+    summary: product.description || '',
+    'release-date': product.createdAt ? new Date(product.createdAt).toISOString().split('T')[0] : undefined
+  };
+
+  if (product.image) {
+    book.images = {
+      cover: {
+        url: `${baseUrl}/images/${product.image}`
+      }
+    };
+  }
+
+  if (product.price) {
+    book.price = product.price / 100; // Convert cents to dollars
+  }
+
+  if (product.category) {
+    book.genre = [product.category];
+  }
+
+  // Add content links for artifacts
+  if (product.artifacts && product.artifacts.length > 0) {
+    book.content = product.artifacts.map(artifact => {
+      const ext = path.extname(artifact).toLowerCase();
+      const typeMap = {
+        '.epub': 'application/epub+zip',
+        '.pdf': 'application/pdf',
+        '.mobi': 'application/x-mobipocket-ebook'
+      };
+
+      return {
+        type: typeMap[ext] || 'application/octet-stream',
+        url: `${baseUrl}/artifacts/${artifact}`
+      };
+    });
+  }
+
+  return book;
+}
+
+// Helper function to convert product to Scribus post format
+function productToScribusPost(product, baseUrl) {
+  const post = {
+    type: 'post',
+    title: product.title,
+    url: `${baseUrl}/products/${product.uuid}/${encodeURIComponent(product.title)}`,
+    uid: product.productId || product.uuid,
+    summary: product.description || '',
+    'published-date': product.createdAt ? new Date(product.createdAt).toISOString() : undefined,
+    language: 'en',
+    status: 'published',
+    visibility: 'public'
+  };
+
+  if (product.image) {
+    post.images = {
+      hero: {
+        url: `${baseUrl}/images/${product.image}`
+      }
+    };
+  }
+
+  if (product.category) {
+    post.categories = [product.category];
+  }
+
+  if (product.tags) {
+    post.tags = product.tags.split(',').map(t => t.trim());
+  }
+
+  // Add content from artifacts
+  if (product.artifacts && product.artifacts.length > 0) {
+    const artifact = product.artifacts[0];
+    const ext = path.extname(artifact).toLowerCase();
+
+    if (ext === '.md' || ext === '.html') {
+      post.content = {
+        html: `<p>View content at <a href="${baseUrl}/artifacts/${artifact}">${baseUrl}/artifacts/${artifact}</a></p>`
+      };
+    }
+  }
+
+  return post;
+}
+
+// Helper function to convert product to Canimus track format
+function productToCanimusTrack(product, baseUrl) {
+  const track = {
+    type: 'track',
+    name: product.title,
+    url: `${baseUrl}/products/${product.uuid}/${encodeURIComponent(product.title)}`,
+    uid: product.productId || product.uuid,
+    summary: product.description || ''
+  };
+
+  if (product.image) {
+    track.images = {
+      cover: {
+        url: `${baseUrl}/images/${product.image}`
+      }
+    };
+  }
+
+  if (product.category) {
+    track.genre = [product.category];
+  }
+
+  // Add media links for artifacts
+  if (product.artifacts && product.artifacts.length > 0) {
+    track.media = product.artifacts.map(artifact => {
+      const ext = path.extname(artifact).toLowerCase();
+      const typeMap = {
+        '.mp3': 'audio/mpeg',
+        '.flac': 'audio/flac',
+        '.m4a': 'audio/mp4',
+        '.ogg': 'audio/ogg',
+        '.wav': 'audio/wav'
+      };
+
+      return {
+        type: typeMap[ext] || 'audio/mpeg',
+        url: `${baseUrl}/artifacts/${artifact}`
+      };
+    });
+  }
+
+  return track;
+}
+
+// Get Libris feed (books)
+app.get('/feeds/books/:uuid', async (req, res) => {
+  try {
+    const uuid = req.params.uuid;
+    const products = await db.getProducts(uuid);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const books = Object.values(products)
+      .filter(p => getProductType(p) === 'book')
+      .map(p => productToLibrisBook(p, baseUrl));
+
+    const feed = {
+      type: 'feed',
+      name: 'Book Collection',
+      url: `${baseUrl}/feeds/books/${uuid}`,
+      links: [
+        {
+          rel: 'self',
+          type: 'application/json',
+          href: `${baseUrl}/feeds/books/${uuid}`
+        }
+      ],
+      items: books
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(feed);
+  } catch (err) {
+    console.warn(err);
+    res.status(404);
+    res.send({ error: 'not found' });
+  }
+});
+
+// Get Scribus feed (blog posts)
+app.get('/feeds/posts/:uuid', async (req, res) => {
+  try {
+    const uuid = req.params.uuid;
+    const products = await db.getProducts(uuid);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const posts = Object.values(products)
+      .filter(p => getProductType(p) === 'post')
+      .map(p => productToScribusPost(p, baseUrl));
+
+    const feed = {
+      type: 'feed',
+      name: 'Blog Posts',
+      url: `${baseUrl}/feeds/posts/${uuid}`,
+      links: [
+        {
+          rel: 'self',
+          type: 'application/json',
+          href: `${baseUrl}/feeds/posts/${uuid}`
+        }
+      ],
+      items: posts
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(feed);
+  } catch (err) {
+    console.warn(err);
+    res.status(404);
+    res.send({ error: 'not found' });
+  }
+});
+
+// Get Canimus feed (music)
+app.get('/feeds/music/:uuid', async (req, res) => {
+  try {
+    const uuid = req.params.uuid;
+    const products = await db.getProducts(uuid);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const tracks = Object.values(products)
+      .filter(p => getProductType(p) === 'music')
+      .map(p => productToCanimusTrack(p, baseUrl));
+
+    const feed = {
+      type: 'feed',
+      name: 'Music Collection',
+      url: `${baseUrl}/feeds/music/${uuid}`,
+      links: [
+        {
+          rel: 'self',
+          type: 'application/json',
+          href: `${baseUrl}/feeds/music/${uuid}`
+        }
+      ],
+      items: tracks
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(feed);
+  } catch (err) {
+    console.warn(err);
+    res.status(404);
+    res.send({ error: 'not found' });
+  }
+});
+
+// Get combined feed (all types)
+app.get('/feeds/all/:uuid', async (req, res) => {
+  try {
+    const uuid = req.params.uuid;
+    const products = await db.getProducts(uuid);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const items = Object.values(products).map(product => {
+      const type = getProductType(product);
+
+      switch (type) {
+        case 'book':
+          return productToLibrisBook(product, baseUrl);
+        case 'music':
+          return productToCanimusTrack(product, baseUrl);
+        case 'post':
+        default:
+          return productToScribusPost(product, baseUrl);
+      }
+    });
+
+    const feed = {
+      type: 'feed',
+      name: 'All Content',
+      url: `${baseUrl}/feeds/all/${uuid}`,
+      links: [
+        {
+          rel: 'self',
+          type: 'application/json',
+          href: `${baseUrl}/feeds/all/${uuid}`
+        }
+      ],
+      items
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(feed);
+  } catch (err) {
+    console.warn(err);
+    res.status(404);
+    res.send({ error: 'not found' });
+  }
+});
+
+// Get base feed (all products from all users)
+app.get('/feeds/base', async (req, res) => {
+  try {
+    const allProducts = await db.getProductsForBase();
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const items = [];
+    allProducts.forEach(userProducts => {
+      Object.values(userProducts).forEach(product => {
+        const type = getProductType(product);
+
+        switch (type) {
+          case 'book':
+            items.push(productToLibrisBook(product, baseUrl));
+            break;
+          case 'music':
+            items.push(productToCanimusTrack(product, baseUrl));
+            break;
+          case 'post':
+          default:
+            items.push(productToScribusPost(product, baseUrl));
+            break;
+        }
+      });
+    });
+
+    const feed = {
+      type: 'feed',
+      name: 'Planet Nine Store',
+      url: `${baseUrl}/feeds/base`,
+      description: 'All digital products from the Planet Nine ecosystem',
+      links: [
+        {
+          rel: 'self',
+          type: 'application/json',
+          href: `${baseUrl}/feeds/base`
+        }
+      ],
+      items
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(feed);
+  } catch (err) {
+    console.warn(err);
+    res.status(404);
+    res.send({ error: 'not found' });
+  }
+});
+
 // MAGIC Protocol endpoint
 app.post('/magic/spell/:spellName', async (req, res) => {
   try {

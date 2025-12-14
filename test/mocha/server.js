@@ -8,7 +8,8 @@ import superAgent from 'superAgent';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const baseURL = process.env.SUB_DOMAIN ? `https://${process.env.SUB_DOMAIN}.sanora.allyabase.com/` : 'http://127.0.0.1:5121/';
+//const baseURL = process.env.SUB_DOMAIN ? `https://${process.env.SUB_DOMAIN}.sanora.allyabase.com/` : 'http://127.0.0.1:5121/';
+const baseURL = 'http://159.203.74.148/api/proxy/sanora/';
 
 const get = async function(path) {
   console.info("Getting " + path);
