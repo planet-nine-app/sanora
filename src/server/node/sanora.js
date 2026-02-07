@@ -1921,6 +1921,23 @@ app.get('/feeds/all/:uuid', async (req, res) => {
   }
 });
 
+app.get('/feeds/:feed/federated', async (req, res) => {
+  try {
+    const feedPath = path.join(__dirname, `../../../wiki/wiki-plugin-allyabase/.aggregated-feeds/${req.params.feed}-federated.json`);
+     if (!fs.existsSync(feedPath)) {
+       return res.status(404).json({ error: `Federated ${feed} feed not available` });
+     }
+
+     const feed = JSON.parse(fs.readFileSync(feedPath, 'utf8'));
+     res.setHeader('Content-Type', 'application/json');
+     res.send(feed);
+  } catch (err) {
+    console.warn(err);
+    res.status(404); 
+    res.send({ error: 'not found' });
+  }
+});
+
 // Get base feed (all products from all users)
 app.get('/feeds/base', async (req, res) => {
   try {
